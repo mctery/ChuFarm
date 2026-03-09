@@ -7,7 +7,7 @@ const logger = require('../config/logger');
 const { SENSOR_VALUE_RANGE, NOTIFICATION_COOLDOWN_MS } = require('../config');
 const { emitToDevice } = require('../config/socketio');
 const { processRules } = require('./ruleEngine');
-
+const { notifyViaTelegram } = require('./telegramService');
 
 /**
  * Notification cooldown — prevents spam when a sensor value stays out of range.
@@ -155,7 +155,11 @@ async function checkThresholds(deviceId, sensorDocs) {
         notificationCooldown.set(cooldownKey, now);
         logger.info('Threshold alert created', { device_id: deviceId, sensor_id: doc.sensor_id, value: numValue });
 
-
+        // Send Telegram notification (non-blocking)
+        notifyViaTelegram(
+          device.user_id,
+          `\n${alertTitle}\nDevice: ${device.name}\nSensor: ${doc.sensor_id}\nValue: ${numValue}`
+        );
       }
     }
   } catch (err) {
@@ -240,7 +244,11 @@ async function handleDeviceWill(topic, _message) {
         severity: 'warning',
       });
 
-
+      // Send Telegram notification (non-blocking)
+      notifyViaTelegram(
+        device.user_id,
+        `\n${device.name} ออฟไลน์\nอุปกรณ์ ${device.name} (${deviceId}) หยุดเชื่อมต่อ`
+      );
     }
 
     logger.debug('Device will (offline)', { device_id: deviceId });

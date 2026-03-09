@@ -25,6 +25,9 @@ const WEATHER_CACHE_CLEANUP_MS = 10 * 60 * 1000; // 10 minutes
 /** Notification cooldown to prevent spam (ms) */
 const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
+/** Telegram Bot */
+const TELEGRAM_API_TIMEOUT_MS = 10000;
+
 /** Default timezone for schedules and quiet hours */
 const DEFAULT_TIMEZONE = 'Asia/Bangkok';
 
@@ -80,6 +83,7 @@ module.exports = {
     'device/+/will',
     'device/+/health',
   ],
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   resendApiKey: process.env.RESEND_API_KEY,
   resendFrom: process.env.RESEND_FROM || 'SmartFarm <onboarding@resend.dev>',
   appUrl: process.env.APP_URL || 'http://localhost:5173',
@@ -96,6 +100,7 @@ module.exports = {
   QUERY_LIMITS,
   WEATHER_CACHE_CLEANUP_MS,
   NOTIFICATION_COOLDOWN_MS,
+  TELEGRAM_API_TIMEOUT_MS,
   DEFAULT_TIMEZONE,
   TREND_THRESHOLD_PERCENT,
   EXPORT,

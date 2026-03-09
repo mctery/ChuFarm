@@ -7,6 +7,7 @@ const updateUserSettingSchema = Joi.object({
     email: Joi.boolean().optional(),
     push: Joi.boolean().optional(),
     in_app: Joi.boolean().optional(),
+    telegram: Joi.boolean().optional(),
   }).optional(),
   dashboard: Joi.object({
     refresh_interval: Joi.number().integer().min(5).max(300).optional(),

@@ -34,6 +34,7 @@ const zoneRoutes = require('./routes/zoneRoutes');
 const exportRoutes = require('./routes/exportRoutes');
 const deviceProfileRoutes = require('./routes/deviceProfileRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const telegramRoutes = require('./routes/telegramRoutes');
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use('/api/zones', zoneRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/device-profiles', deviceProfileRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

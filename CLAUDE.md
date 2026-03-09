@@ -34,7 +34,7 @@ IoT Device → MQTT Broker → api/mqttHandler
   → app/ receives via MqttProvider + useSensorValue() hook
   → Real-time UI update with animated values
 
-Threshold exceeded → Notification
+Threshold exceeded → Notification + Telegram
 Rule conditions met → actionExecutor (MQTT command / notification / log)
 Cron schedule → scheduleEngine → actionExecutor
 ```
@@ -59,7 +59,7 @@ Login → POST /api/users/login → JWT access (12h) + refresh (7d)
 | Charts | — | MUI X-Charts 8 |
 | Widgets | — | GridStack 12 |
 | Scheduling | node-cron 4 | — |
-| Notifications | Resend (email) | Notistack 3 |
+| Notifications | Telegram Bot + Resend | Notistack 3 |
 
 ## Conventions (Both Projects)
 

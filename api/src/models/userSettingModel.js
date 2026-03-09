@@ -20,6 +20,15 @@ const userSettingSchema = mongoose.Schema(
       email: { type: Boolean, default: false },
       push: { type: Boolean, default: false },
       in_app: { type: Boolean, default: true },
+      telegram: { type: Boolean, default: false },
+    },
+    telegram_chat_id: {
+      type: String,
+      default: null,
+    },
+    telegram_linked_at: {
+      type: Date,
+      default: null,
     },
     quiet_hours: {
       enabled: { type: Boolean, default: false },

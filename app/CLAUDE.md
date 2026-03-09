@@ -44,7 +44,7 @@ src/
 │   ├── admin/                 # 9 admin pages (all use AdminPageWrapper)
 │   ├── DashboardPage.jsx      # Main dashboard (stats, weather, notifications)
 │   ├── NotificationsPage.jsx  # Notification center
-│   ├── SettingsPage.jsx       # User settings (profile, password, notifications)
+│   ├── SettingsPage.jsx       # User settings (profile, password, notifications, Telegram)
 │   └── ...                    # About, Help, PageNotFound
 ├── components/
 │   ├── GridStack/             # Widget dashboard (MqttContext, sensor widgets)

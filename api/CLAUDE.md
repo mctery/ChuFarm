@@ -25,6 +25,7 @@ yarn format       # Prettier
 - **Security:** Helmet 8, express-rate-limit 8, CORS
 - **Scheduling:** node-cron 4
 - **Email:** Resend API
+- **Notifications:** Telegram Bot API
 - **Deploy:** Vercel (serverless) or VPS (full features)
 
 ## Project Structure
@@ -56,6 +57,7 @@ src/
 │   ├── scheduleEngine.js    # Cron scheduling (node-cron)
 │   ├── actionExecutor.js    # MQTT commands + notifications
 │   ├── mqttHandler.js       # Sensor data ingestion + threshold checks
+│   ├── telegramService.js   # Telegram Bot API (link, notify, webhook)
 │   ├── emailService.js      # Password reset emails (Resend)
 │   └── recommendationEngine.js  # Farm-type recommendations (Thai)
 ├── validations/             # 14 Joi schema files
@@ -110,7 +112,7 @@ Client → Rate Limit → Helmet → CORS → JSON Parser
 IoT Device → MQTT Broker → mqttHandler
   → SensorData (MongoDB)
   → Socket.IO emit (to device rooms)
-  → checkThresholds → Notification
+  → checkThresholds → Notification + Telegram
   → processRules (ruleEngine) → actionExecutor → MQTT/Notification/Log
 
 Cron Timer → scheduleEngine → actionExecutor
@@ -228,7 +230,7 @@ Admin users (`role: 'admin'` or `permissions: ['*']`) bypass all permission chec
 | Permission | permissions | - | user_id (unique), permissions[] |
 | Menu | menus | - | key (unique), name, path, parent_id (2-level hierarchy) |
 | UserMenu | usermenus | - | user_id (unique), menu_ids[] (ref Menu) |
-| UserSetting | usersettings | - | user_id (unique), timezone, language, notification prefs, quiet_hours |
+| UserSetting | usersettings | - | user_id (unique), timezone, language, notification prefs, telegram_chat_id, quiet_hours |
 
 ### Conventions
 - **Soft deletes:** `status: 'A'` (active) / `'D'` (deleted) — never hard delete
@@ -351,8 +353,11 @@ PUT    /api/notifications/:id/read                   # Mark read
 PUT    /api/notifications/user/:user_id/read-all     # Mark all read
 DELETE /api/notifications/:id                        # Delete
 
-GET    /api/settings/:user_id                 # Get (auto-creates defaults)
-PUT    /api/settings/:user_id                 # Update
+GET    /api/settings/:user_id                     # Get (auto-creates defaults)
+PUT    /api/settings/:user_id                     # Update
+POST   /api/settings/:user_id/telegram/link       # Generate link code (6-char, 10min)
+DELETE /api/settings/:user_id/telegram/link       # Unlink Telegram
+GET    /api/settings/:user_id/telegram/status     # Check link status
 ```
 
 ### Admin (require admin role)
