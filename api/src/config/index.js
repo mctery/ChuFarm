@@ -74,10 +74,16 @@ module.exports = {
   mqttUrl: process.env.MQTT_URL,
   mqttUser: process.env.MQTT_USER || '',
   mqttPass: process.env.MQTT_PASS || '',
-  // Subscribe to all device topics via wildcard — supports any sensor type dynamically
-  mqttTopics: ['device/+/+'],
-  // Reserved (non-sensor) MQTT subtopics handled separately
-  mqttReservedSubtopics: new Set(['checkin', 'will', 'health']),
+  // MQTT topics to subscribe — explicit list (wildcard unsafe on public brokers)
+  mqttTopics: [
+    'device/+/temperature',
+    'device/+/humidity',
+    'device/+/light',
+    'device/+/soil',
+    'device/+/checkin',
+    'device/+/will',
+    'device/+/health',
+  ],
   resendApiKey: process.env.RESEND_API_KEY,
   resendFrom: process.env.RESEND_FROM || 'SmartFarm <onboarding@resend.dev>',
   appUrl: process.env.APP_URL || 'http://localhost:5173',

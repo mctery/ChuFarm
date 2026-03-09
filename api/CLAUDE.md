@@ -415,6 +415,16 @@ bcryptRounds = 10
 rateLimitWindowMs = 15 * 60 * 1000             // 15 min
 rateLimitMax = 100
 authRateLimitMax = 10
+
+// Centralized enums (ENUMS object)
+ENUMS.ROLES           // ['admin', 'user']
+ENUMS.FARM_TYPES      // ['greenhouse', 'openfield', 'indoor', 'hydroponic', 'other']
+ENUMS.ZONE_TYPES      // ['greenhouse', 'field', 'nursery', 'storage', 'other']
+ENUMS.NOTIFICATION_TYPES  // ['threshold_alert', 'device_offline', 'device_online', 'system']
+ENUMS.SEVERITY        // ['info', 'warning', 'critical']
+ENUMS.OPERATORS       // ['gt', 'gte', 'lt', 'lte', 'eq', 'neq', 'between']
+ENUMS.ACTION_TYPES    // ['device_command', 'send_notification', 'log_event']
+// ... and more (see config/index.js for full list)
 ```
 
 ## Coding Conventions
@@ -425,9 +435,11 @@ authRateLimitMax = 10
 - **Success responses:** `res.json({ message: 'OK', data: ... })`
 - **Pagination:** `{ page, limit }` in query/body → `{ data, pagination: { page, limit, total, totalPages } }`
 - **Soft delete:** Set `status: 'D'`, never hard delete
-- **Ownership:** Check `user_id` match or admin role before data access
+- **Ownership:** Use `findAndAuthorize(res, req, Model, id, { name })` from `utils/errors.js`
+- **Not found:** Use `notFound(res, resource, 'Name')` from `utils/errors.js`
 - **Audit:** Use `auditLog(action, resourceType)` middleware on mutations
 - **Device ID validation:** Regex `^[a-zA-Z0-9_-]+$` to prevent MQTT topic injection
+- **Enums:** Use `ENUMS` from config — single source of truth for model enums
 
 ## Socket.IO Events
 
