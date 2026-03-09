@@ -20,9 +20,7 @@ const userSettingSchema = mongoose.Schema(
       email: { type: Boolean, default: false },
       push: { type: Boolean, default: false },
       in_app: { type: Boolean, default: true },
-      line: { type: Boolean, default: false },
     },
-    line_token: { type: String, default: null },
     quiet_hours: {
       enabled: { type: Boolean, default: false },
       start: { type: String, default: '22:00' },

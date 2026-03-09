@@ -25,10 +25,6 @@ const WEATHER_CACHE_CLEANUP_MS = 10 * 60 * 1000; // 10 minutes
 /** Notification cooldown to prevent spam (ms) */
 const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
-/** LINE Notify */
-const LINE_NOTIFY_URL = 'https://notify-api.line.me/api/notify';
-const LINE_NOTIFY_TIMEOUT_MS = 10000;
-
 /** Default timezone for schedules and quiet hours */
 const DEFAULT_TIMEZONE = 'Asia/Bangkok';
 
@@ -100,8 +96,6 @@ module.exports = {
   QUERY_LIMITS,
   WEATHER_CACHE_CLEANUP_MS,
   NOTIFICATION_COOLDOWN_MS,
-  LINE_NOTIFY_URL,
-  LINE_NOTIFY_TIMEOUT_MS,
   DEFAULT_TIMEZONE,
   TREND_THRESHOLD_PERCENT,
   EXPORT,
