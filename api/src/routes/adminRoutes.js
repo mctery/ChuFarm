@@ -12,6 +12,8 @@ const {
   bulkRoleSchema,
   bulkDeleteUsersSchema,
   bulkDeleteDevicesSchema,
+  createAdminUserSchema,
+  updateAdminUserSchema,
 } = require('../validations/adminValidation');
 const {
   getAdminUsers,
@@ -37,6 +39,9 @@ const {
   bulkUpdateRole,
   bulkDeleteUsers,
   bulkDeleteDevices,
+  createAdminUser,
+  updateAdminUser,
+  deleteAdminUser,
 } = require('../controllers/adminController');
 
 const router = express.Router();
@@ -57,12 +62,15 @@ router.delete('/users/bulk-delete', validate(bulkDeleteUsersSchema), bulkDeleteU
 
 // Users
 router.get('/users', getAdminUsers);
+router.post('/users', validate(createAdminUserSchema), createAdminUser);
 router.get('/users/:id', getAdminUser);
 router.put('/users/:id/role', validate(updateRoleSchema), updateUserRole);
 router.get('/users/:id/permissions', getUserPermissions);
 router.put('/users/:id/permissions', validate(updatePermissionsSchema), updateUserPermissions);
 router.get('/users/:id/menus', getUserMenus);
 router.put('/users/:id/menus', validate(updateUserMenusSchema), updateUserMenus);
+router.put('/users/:id', validate(updateAdminUserSchema), updateAdminUser);
+router.delete('/users/:id', deleteAdminUser);
 
 // Devices — bulk operations BEFORE :id routes
 router.delete('/devices/bulk-delete', validate(bulkDeleteDevicesSchema), bulkDeleteDevices);

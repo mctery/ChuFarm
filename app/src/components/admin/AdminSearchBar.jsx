@@ -19,12 +19,14 @@ export default function AdminSearchBar({ placeholder = "ค้นหา...", onS
       value={input}
       onChange={(e) => setInput(e.target.value)}
       sx={{ width: 320 }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        },
       }}
     />
   );

@@ -29,7 +29,7 @@ const generateTelegramLink = asyncHandler(async (req, res) => {
     data: {
       code,
       expires_in: 600,
-      instructions: 'ส่งรหัสนี้ให้ SmartFarm Bot ใน Telegram โดยพิมพ์ /link ' + code,
+      instructions: 'ส่งรหัสนี้ให้ ChuFarm Bot ใน Telegram โดยพิมพ์ /link ' + code,
     },
   });
 });

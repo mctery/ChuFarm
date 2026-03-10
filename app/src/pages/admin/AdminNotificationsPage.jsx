@@ -23,6 +23,7 @@ import AdminSearchBar from "../../components/admin/AdminSearchBar";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import ExportButton from "../../components/admin/ExportButton";
 import apiClient from "../../services/apiClient";
+import { formatDate } from "../../utils/dateFormat";
 
 const TYPES = ["threshold_alert", "device_offline", "device_online", "system"];
 const SEVERITIES = ["info", "warning", "critical"];
@@ -53,11 +54,6 @@ const CSV_COLUMNS = [
   { key: "severity", label: "ความรุนแรง" },
   { key: "is_read", label: "อ่านแล้ว" },
 ];
-
-function formatDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
-}
 
 export default function AdminNotificationsPage() {
   const { enqueueSnackbar } = useSnackbar();

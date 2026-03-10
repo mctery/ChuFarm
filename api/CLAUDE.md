@@ -26,7 +26,7 @@ yarn format       # Prettier
 - **Scheduling:** node-cron 4
 - **Email:** Resend API
 - **Notifications:** Telegram Bot API
-- **Deploy:** Vercel (serverless) or VPS (full features)
+- **Deploy:** fly.io (full features: HTTP + Socket.IO + MQTT + cron) — https://chufarm-api.fly.dev
 
 ## Project Structure
 
@@ -455,18 +455,42 @@ sensorType       // e.g., 'temperature', 'humidity' — sensor data payload
 
 ## Deployment
 
-### Vercel (Serverless)
+### fly.io (Production — Full Features)
+- **URL:** https://chufarm-api.fly.dev
+- HTTP + Socket.IO + MQTT + Cron all active
+- Region: Singapore (`sin`), 512MB RAM, shared CPU
+- Graceful shutdown: stops cron, closes connections
+- Docker image: `node:20-alpine`, production deps only
+
+```bash
+# Deploy
+cd api && fly deploy --ha=false
+
+# View logs
+fly logs -a chufarm-api
+
+# Manage secrets
+fly secrets list -a chufarm-api
+fly secrets set KEY=value -a chufarm-api
+```
+
+**Secrets set on fly.io:**
+- `MONGO_URL`, `TOKEN_KEY`, `REFRESH_TOKEN_KEY`
+- `MQTT_URL`, `TELEGRAM_BOT_TOKEN`
+- `RESEND_API_KEY`, `RESEND_FROM`, `OPEN_WEATHER_KEY`
+- `FRONTEND=https://chufarm-app.fly.dev` (CORS)
+- `APP_URL=https://chufarm-app.fly.dev` (password reset links)
+
+### Vercel (Serverless — legacy config kept)
 - Lazy DB connection on first request
 - MQTT/Socket.IO/Cron disabled (HTTP-only)
 - Config: `vercel.json` routes all to `server.js`
 
-### VPS (Full Features)
-- HTTP + Socket.IO + MQTT + Cron all active
-- Graceful shutdown: stops cron, closes connections
-- `NODE_ENV=production yarn start`
+### Local Development
+- `NODE_ENV=development yarn dev`
 
 ## Frontend Companion
 
-- **Repo:** SmartFarm-vite-app (React 19 + MUI 7 + Vite 6)
-- **Default CORS origin:** `http://localhost:5173`
-- See `REDESIGN_ROADMAP.md` in frontend repo for UI status
+- **URL:** https://chufarm-app.fly.dev
+- **Default CORS origin (local):** `http://localhost:5173`
+- See `app/CLAUDE.md` for frontend documentation

@@ -37,6 +37,7 @@ import { SysGetDevices } from "../services/device_service";
 import { getUserInfo } from "../services/storage_service";
 import { ROUTES } from "../constants/routes";
 import apiClient from "../services/apiClient";
+import { SEVERITY_COLORS, APP_CONFIG } from "../services/global_variable";
 
 function StatCard({ icon, label, value, color, loading, onClick }) {
   return (
@@ -78,12 +79,6 @@ function StatCard({ icon, label, value, color, loading, onClick }) {
   );
 }
 
-const SEVERITY_COLORS = {
-  critical: "error",
-  warning: "warning",
-  info: "info",
-};
-
 export default function DashboardPage() {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -100,19 +95,21 @@ export default function DashboardPage() {
       const devRes = await SysGetDevices();
       if (Array.isArray(devRes)) {
         setDevices(devRes);
-        let totalSensors = 0;
-        for (const d of devRes) {
-          try {
-            const { data } = await apiClient.get(`/api/sensors/device/${d.device_id}`);
-            if (data?.data) totalSensors += data.data.length;
-          } catch { /* skip */ }
-        }
+        const sensorResults = await Promise.all(
+          devRes.map((d) =>
+            apiClient.get(`/api/sensors/device/${d.device_id}`).catch(() => null)
+          )
+        );
+        const totalSensors = sensorResults.reduce(
+          (sum, res) => sum + (res?.data?.data?.length || 0),
+          0
+        );
         setSensorCount(totalSensors);
       }
     } catch { /* skip */ }
 
     try {
-      const { data } = await apiClient.get("/api/weather/Bangkok");
+      const { data } = await apiClient.get(`/api/weather/${APP_CONFIG.WEATHER_CITY}`);
       if (data?.data) setWeather(data.data);
     } catch { /* skip */ }
 
@@ -165,7 +162,7 @@ export default function DashboardPage() {
                 {greeting()}, {userInfo?.first_name || "ผู้ใช้"}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.5 }}>
-                ยินดีต้อนรับสู่ระบบจัดการฟาร์มอัจฉริยะ Smart Chu Farm
+                ยินดีต้อนรับสู่ระบบจัดการฟาร์มอัจฉริยะ ChuFarm
               </Typography>
             </Box>
             <Avatar

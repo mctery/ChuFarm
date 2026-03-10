@@ -95,7 +95,7 @@ const LoginPage = () => {
           <AgricultureIcon sx={{ fontSize: 32, color: "white" }} />
         </Box>
         <Typography variant="h5" sx={{ fontWeight: 700, color: "primary.main" }}>
-          Smart Chu Farm
+          ChuFarm
         </Typography>
         <Typography variant="body2" color="text.secondary">
           เข้าสู่ระบบจัดการฟาร์มอัจฉริยะ

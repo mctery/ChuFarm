@@ -14,6 +14,9 @@ export const ROUTES = {
   THRESHOLDS: "/farm_control_system/thresholds",
   AUTOMATION_RULES: "/farm_control_system/automation-rules",
   SCHEDULES: "/farm_control_system/schedules",
+  FARMS: "/farm_control_system/farms",
+  FARM_DETAIL: (id) => `/farm_control_system/farms/${id}`,
+  ANALYTICS: "/farm_control_system/analytics",
   // Admin
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_USERS: "/admin/users",

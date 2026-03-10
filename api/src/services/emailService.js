@@ -13,10 +13,10 @@ async function sendPasswordResetEmail(toEmail, resetUrl, firstName) {
   const { data, error } = await resend.emails.send({
     from: resendFrom,
     to: [toEmail],
-    subject: 'รีเซ็ตรหัสผ่าน - SmartFarm',
+    subject: 'รีเซ็ตรหัสผ่าน - ChuFarm',
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2e7d32;">SmartFarm</h2>
+        <h2 style="color: #2e7d32;">ChuFarm</h2>
         <p>สวัสดี ${firstName},</p>
         <p>เราได้รับคำขอรีเซ็ตรหัสผ่านของคุณ กรุณาคลิกปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่:</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -29,7 +29,7 @@ async function sendPasswordResetEmail(toEmail, resetUrl, firstName) {
         <p style="color: #666; font-size: 14px;">ลิงก์นี้จะหมดอายุภายใน 1 ชั่วโมง</p>
         <p style="color: #666; font-size: 14px;">หากคุณไม่ได้ขอรีเซ็ตรหัสผ่าน กรุณาเพิกเฉยอีเมลนี้</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-        <p style="color: #999; font-size: 12px;">SmartFarm - ระบบจัดการฟาร์มอัจฉริยะ</p>
+        <p style="color: #999; font-size: 12px;">ChuFarm - ระบบจัดการฟาร์มอัจฉริยะ</p>
       </div>
     `,
   });

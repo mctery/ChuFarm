@@ -154,6 +154,19 @@ export function getTheme(mode) {
           },
         },
       },
+      MuiTextField: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active":
+              {
+                WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.paper} inset`,
+                WebkitTextFillColor: theme.palette.text.primary,
+                caretColor: theme.palette.text.primary,
+                transition: "background-color 5000s ease-in-out 0s",
+              },
+          }),
+        },
+      },
     },
   });
 

@@ -20,6 +20,7 @@ import { useSnackbar } from "notistack";
 import AdminPageWrapper from "../../components/admin/AdminPageWrapper";
 import StatCard from "../../components/admin/StatCard";
 import apiClient from "../../services/apiClient";
+import { formatDate } from "../../utils/dateFormat";
 
 const ACTION_COLORS = {
   create: "success",
@@ -34,14 +35,6 @@ const SEVERITY_COLORS = {
   warning: "warning",
   critical: "error",
 };
-
-function formatDate(dateStr) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleString("th-TH", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
-}
 
 export default function AdminDashboardPage() {
   const { enqueueSnackbar } = useSnackbar();

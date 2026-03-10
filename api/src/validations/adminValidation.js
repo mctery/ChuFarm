@@ -54,6 +54,21 @@ const bulkDeleteDevicesSchema = Joi.object({
   device_ids: Joi.array().items(objectId).min(1).required(),
 });
 
+const createAdminUserSchema = Joi.object({
+  first_name: Joi.string().min(1).max(100).required(),
+  last_name: Joi.string().min(1).max(100).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).required(),
+  role: Joi.string().valid('admin', 'user').default('user'),
+});
+
+const updateAdminUserSchema = Joi.object({
+  first_name: Joi.string().min(1).max(100),
+  last_name: Joi.string().min(1).max(100),
+  email: Joi.string().email(),
+  status: Joi.string().valid('A', 'D'),
+}).min(1);
+
 module.exports = {
   updateRoleSchema,
   updatePermissionsSchema,
@@ -64,4 +79,6 @@ module.exports = {
   bulkRoleSchema,
   bulkDeleteUsersSchema,
   bulkDeleteDevicesSchema,
+  createAdminUserSchema,
+  updateAdminUserSchema,
 };

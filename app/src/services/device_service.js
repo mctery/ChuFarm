@@ -35,3 +35,11 @@ export async function SysDeleteDevice(id) {
   const res = await makeRequest((api) => api.delete(`/api/devices/${id}`), { fallback: false, label: "SysDeleteDevice" });
   return res.message === "OK";
 }
+
+export async function SysSendDeviceCommand(id, command, payload = {}) {
+  const res = await makeRequest(
+    (api) => api.post(`/api/devices/${id}/commands`, { command, payload }),
+    { label: "SysSendDeviceCommand" }
+  );
+  return res.data ?? null;
+}

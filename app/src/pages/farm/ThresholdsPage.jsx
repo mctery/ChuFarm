@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   Box,
   Typography,
@@ -30,7 +31,7 @@ import apiClient from "../../services/apiClient";
 import { getUserInfo } from "../../services/storage_service";
 import { SysGetDevices } from "../../services/device_service";
 import { SysGetDeviceSensorsById } from "../../services/sensor_service";
-import BoxLoading from "../../components/BoxLoading";
+import SkeletonCardGrid from "../../components/SkeletonCardGrid";
 import DialogConfirm from "../../components/DialogConfirm";
 
 const NOTIFY_OPTIONS = [
@@ -50,7 +51,8 @@ export default function ThresholdsPage() {
   const [sensors, setSensors] = useState([]);
 
   // Dialog state
-  const [dialog, setDialog] = useState({ open: false, threshold: null });
+  const dialog = useDialogState();
+  const deleteDialog = useDialogState();
   const [form, setForm] = useState({
     device_id: "",
     sensor_id: "",
@@ -59,7 +61,6 @@ export default function ThresholdsPage() {
     notify_type: "in_app",
   });
   const [saving, setSaving] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
   const fetchThresholds = useCallback(async () => {
     if (!userId) return;
@@ -101,7 +102,7 @@ export default function ThresholdsPage() {
       notify_type: "in_app",
     });
     setSensors([]);
-    setDialog({ open: true, threshold: null });
+    dialog.open(null);
   };
 
   const openEdit = async (t) => {
@@ -116,7 +117,7 @@ export default function ThresholdsPage() {
       const s = await SysGetDeviceSensorsById(t.device_id);
       setSensors(s || []);
     }
-    setDialog({ open: true, threshold: t });
+    dialog.open(t);
   };
 
   const handleSave = async () => {
@@ -128,6 +129,14 @@ export default function ThresholdsPage() {
       enqueueSnackbar("กรุณากำหนดค่า Min หรือ Max อย่างน้อย 1 ค่า", {
         variant: "warning",
       });
+      return;
+    }
+    if (
+      form.min_value !== "" &&
+      form.max_value !== "" &&
+      Number(form.min_value) >= Number(form.max_value)
+    ) {
+      enqueueSnackbar("ค่า Min ต้องน้อยกว่า Max", { variant: "warning" });
       return;
     }
 
@@ -142,14 +151,14 @@ export default function ThresholdsPage() {
     };
 
     try {
-      if (dialog.threshold) {
-        await apiClient.put(`/api/thresholds/${dialog.threshold._id}`, payload);
+      if (dialog.state.item) {
+        await apiClient.put(`/api/thresholds/${dialog.state.item._id}`, payload);
         enqueueSnackbar("แก้ไข Threshold สำเร็จ", { variant: "success" });
       } else {
         await apiClient.post("/api/thresholds", payload);
         enqueueSnackbar("สร้าง Threshold สำเร็จ", { variant: "success" });
       }
-      setDialog({ open: false, threshold: null });
+      dialog.close();
       fetchThresholds();
     } catch {
       enqueueSnackbar("เกิดข้อผิดพลาด", { variant: "error" });
@@ -159,9 +168,9 @@ export default function ThresholdsPage() {
 
   const handleDelete = async () => {
     try {
-      await apiClient.delete(`/api/thresholds/${deleteDialog.id}`);
+      await apiClient.delete(`/api/thresholds/${deleteDialog.state.item}`);
       enqueueSnackbar("ลบ Threshold แล้ว", { variant: "success" });
-      setDeleteDialog({ open: false, id: null });
+      deleteDialog.close();
       fetchThresholds();
     } catch {
       enqueueSnackbar("ลบไม่สำเร็จ", { variant: "error" });
@@ -171,7 +180,7 @@ export default function ThresholdsPage() {
   const getDeviceName = (id) =>
     devices.find((d) => d.device_id === id)?.name || id;
 
-  if (loading) return <BoxLoading />;
+  if (loading) return <SkeletonCardGrid count={6} height={130} />;
 
   return (
     <Box>
@@ -288,9 +297,7 @@ export default function ThresholdsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    onClick={() =>
-                      setDeleteDialog({ open: true, id: t._id })
-                    }
+                    onClick={() => deleteDialog.open(t._id)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
@@ -303,13 +310,13 @@ export default function ThresholdsPage() {
 
       {/* Create / Edit Dialog */}
       <Dialog
-        open={dialog.open}
-        onClose={() => setDialog({ open: false, threshold: null })}
+        open={dialog.state.open}
+        onClose={dialog.close}
         fullWidth
         maxWidth="sm"
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
-          {dialog.threshold ? "แก้ไข Threshold" : "เพิ่ม Threshold"}
+          {dialog.state.item ? "แก้ไข Threshold" : "เพิ่ม Threshold"}
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2.5} sx={{ mt: 0.5 }}>
@@ -320,7 +327,7 @@ export default function ThresholdsPage() {
               size="small"
               value={form.device_id}
               onChange={(e) => handleDeviceChange(e.target.value)}
-              disabled={!!dialog.threshold}
+              disabled={!!dialog.state.item}
             >
               {devices.map((d) => (
                 <MenuItem key={d.device_id} value={d.device_id}>
@@ -338,7 +345,7 @@ export default function ThresholdsPage() {
               onChange={(e) =>
                 setForm((f) => ({ ...f, sensor_id: e.target.value }))
               }
-              disabled={!form.device_id || !!dialog.threshold}
+              disabled={!form.device_id || !!dialog.state.item}
             >
               {sensors.map((s) => (
                 <MenuItem key={s.sensor_id} value={s.sensor_id}>
@@ -395,22 +402,18 @@ export default function ThresholdsPage() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button
-            onClick={() => setDialog({ open: false, threshold: null })}
-          >
-            ยกเลิก
-          </Button>
+          <Button onClick={dialog.close}>ยกเลิก</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {dialog.threshold ? "บันทึก" : "สร้าง"}
+            {dialog.state.item ? "บันทึก" : "สร้าง"}
           </Button>
         </DialogActions>
       </Dialog>
 
       <DialogConfirm
-        open={deleteDialog.open}
+        open={deleteDialog.state.open}
         title="ลบ Threshold?"
         content="ต้องการลบ threshold นี้หรือไม่?"
-        handleClose={() => setDeleteDialog({ open: false, id: null })}
+        handleClose={deleteDialog.close}
         handleConfirm={handleDelete}
       />
     </Box>

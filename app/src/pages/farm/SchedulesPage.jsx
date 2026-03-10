@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   Box,
   Typography,
@@ -29,25 +30,10 @@ import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import { useSnackbar } from "notistack";
 import apiClient from "../../services/apiClient";
 import { SysGetDevices } from "../../services/device_service";
-import BoxLoading from "../../components/BoxLoading";
+import SkeletonCardGrid from "../../components/SkeletonCardGrid";
 import DialogConfirm from "../../components/DialogConfirm";
-
-const ACTION_TYPES = [
-  { value: "send_notification", label: "ส่งแจ้งเตือน" },
-  { value: "device_command", label: "ส่งคำสั่งอุปกรณ์" },
-  { value: "log_event", label: "บันทึก Log" },
-];
-
-const CRON_PRESETS = [
-  { label: "ทุก 5 นาที", value: "*/5 * * * *" },
-  { label: "ทุก 15 นาที", value: "*/15 * * * *" },
-  { label: "ทุก 30 นาที", value: "*/30 * * * *" },
-  { label: "ทุกชั่วโมง", value: "0 * * * *" },
-  { label: "ทุกวัน 06:00", value: "0 6 * * *" },
-  { label: "ทุกวัน 18:00", value: "0 18 * * *" },
-  { label: "ทุกวัน เที่ยงคืน", value: "0 0 * * *" },
-  { label: "กำหนดเอง", value: "" },
-];
+import { ACTION_TYPES, CRON_PRESETS, DEFAULT_TIMEZONE } from "../../constants/automation";
+import { formatDate } from "../../utils/dateFormat";
 
 const emptyAction = () => ({
   type: "send_notification",
@@ -66,18 +52,18 @@ export default function SchedulesPage() {
   const [devices, setDevices] = useState([]);
 
   // Dialog
-  const [dialog, setDialog] = useState({ open: false, schedule: null });
+  const dialog = useDialogState();
+  const deleteDialog = useDialogState();
   const [form, setForm] = useState({
     name: "",
     description: "",
     cron_expression: "0 * * * *",
     cron_preset: "0 * * * *",
-    timezone: "Asia/Bangkok",
+    timezone: DEFAULT_TIMEZONE,
     actions: [emptyAction()],
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const [logsDialog, setLogsDialog] = useState({ open: false, logs: [], name: "" });
 
   const fetchSchedules = useCallback(async () => {
@@ -106,11 +92,11 @@ export default function SchedulesPage() {
       description: "",
       cron_expression: "0 * * * *",
       cron_preset: "0 * * * *",
-      timezone: "Asia/Bangkok",
+      timezone: DEFAULT_TIMEZONE,
       actions: [emptyAction()],
       is_active: true,
     });
-    setDialog({ open: true, schedule: null });
+    dialog.open(null);
   };
 
   const openEdit = (s) => {
@@ -120,11 +106,11 @@ export default function SchedulesPage() {
       description: s.description || "",
       cron_expression: s.cron_expression,
       cron_preset: preset ? s.cron_expression : "",
-      timezone: s.timezone || "Asia/Bangkok",
+      timezone: s.timezone || DEFAULT_TIMEZONE,
       actions: s.actions.map((a) => ({ ...a })),
       is_active: s.is_active,
     });
-    setDialog({ open: true, schedule: s });
+    dialog.open(s);
   };
 
   const handleToggle = async (id) => {
@@ -161,14 +147,14 @@ export default function SchedulesPage() {
     };
 
     try {
-      if (dialog.schedule) {
-        await apiClient.put(`/api/schedules/${dialog.schedule._id}`, payload);
+      if (dialog.state.item) {
+        await apiClient.put(`/api/schedules/${dialog.state.item._id}`, payload);
         enqueueSnackbar("แก้ไข Schedule สำเร็จ", { variant: "success" });
       } else {
         await apiClient.post("/api/schedules", payload);
         enqueueSnackbar("สร้าง Schedule สำเร็จ", { variant: "success" });
       }
-      setDialog({ open: false, schedule: null });
+      dialog.close();
       fetchSchedules();
     } catch {
       enqueueSnackbar("เกิดข้อผิดพลาด กรุณาตรวจสอบ Cron Expression", {
@@ -180,9 +166,9 @@ export default function SchedulesPage() {
 
   const handleDelete = async () => {
     try {
-      await apiClient.delete(`/api/schedules/${deleteDialog.id}`);
+      await apiClient.delete(`/api/schedules/${deleteDialog.state.item}`);
       enqueueSnackbar("ลบ Schedule แล้ว", { variant: "success" });
-      setDeleteDialog({ open: false, id: null });
+      deleteDialog.close();
       fetchSchedules();
     } catch {
       enqueueSnackbar("ลบไม่สำเร็จ", { variant: "error" });
@@ -224,10 +210,8 @@ export default function SchedulesPage() {
     }));
   };
 
-  const formatDate = (d) =>
-    d ? new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }) : "-";
 
-  if (loading) return <BoxLoading />;
+  if (loading) return <SkeletonCardGrid count={4} height={160} />;
 
   return (
     <Box>
@@ -345,9 +329,7 @@ export default function SchedulesPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    onClick={() =>
-                      setDeleteDialog({ open: true, id: s._id })
-                    }
+                    onClick={() => deleteDialog.open(s._id)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
@@ -360,13 +342,13 @@ export default function SchedulesPage() {
 
       {/* Create / Edit Dialog */}
       <Dialog
-        open={dialog.open}
-        onClose={() => setDialog({ open: false, schedule: null })}
+        open={dialog.state.open}
+        onClose={dialog.close}
         fullWidth
         maxWidth="sm"
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
-          {dialog.schedule ? "แก้ไข Schedule" : "สร้าง Schedule"}
+          {dialog.state.item ? "แก้ไข Schedule" : "สร้าง Schedule"}
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2.5}>
@@ -557,11 +539,9 @@ export default function SchedulesPage() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setDialog({ open: false, schedule: null })}>
-            ยกเลิก
-          </Button>
+          <Button onClick={dialog.close}>ยกเลิก</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {dialog.schedule ? "บันทึก" : "สร้าง"}
+            {dialog.state.item ? "บันทึก" : "สร้าง"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -623,10 +603,10 @@ export default function SchedulesPage() {
       </Dialog>
 
       <DialogConfirm
-        open={deleteDialog.open}
+        open={deleteDialog.state.open}
         title="ลบ Schedule?"
         content="ต้องการลบ schedule นี้หรือไม่?"
-        handleClose={() => setDeleteDialog({ open: false, id: null })}
+        handleClose={deleteDialog.close}
         handleConfirm={handleDelete}
       />
     </Box>

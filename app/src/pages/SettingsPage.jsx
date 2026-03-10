@@ -449,7 +449,7 @@ export default function SettingsPage() {
                 </Typography>
                 {telegramLinkCode ? (
                   <Alert severity="info" sx={{ fontFamily: "monospace" }}>
-                    ส่งรหัสนี้ให้ SmartFarm Bot ใน Telegram:{" "}
+                    ส่งรหัสนี้ให้ ChuFarm Bot ใน Telegram:{" "}
                     <Typography component="span" fontWeight={700} fontFamily="monospace" fontSize="1.1rem">
                       /link {telegramLinkCode}
                     </Typography>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   Box,
   Typography,
@@ -34,23 +35,9 @@ import { useSnackbar } from "notistack";
 import apiClient from "../../services/apiClient";
 import { SysGetDevices } from "../../services/device_service";
 import { SysGetDeviceSensorsById } from "../../services/sensor_service";
-import BoxLoading from "../../components/BoxLoading";
+import SkeletonCardGrid from "../../components/SkeletonCardGrid";
 import DialogConfirm from "../../components/DialogConfirm";
-
-const OPERATORS = [
-  { value: "gt", label: ">" },
-  { value: "gte", label: ">=" },
-  { value: "lt", label: "<" },
-  { value: "lte", label: "<=" },
-  { value: "eq", label: "=" },
-  { value: "neq", label: "!=" },
-];
-
-const ACTION_TYPES = [
-  { value: "send_notification", label: "ส่งแจ้งเตือน" },
-  { value: "device_command", label: "ส่งคำสั่งอุปกรณ์" },
-  { value: "log_event", label: "บันทึก Log" },
-];
+import { OPERATORS, ACTION_TYPES } from "../../constants/automation";
 
 const emptyCondition = () => ({
   type: "sensor_value",
@@ -81,7 +68,8 @@ export default function AutomationRulesPage() {
   const [expandedId, setExpandedId] = useState(null);
 
   // Dialog
-  const [dialog, setDialog] = useState({ open: false, rule: null });
+  const dialog = useDialogState();
+  const deleteDialog = useDialogState();
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -92,7 +80,6 @@ export default function AutomationRulesPage() {
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
   // Logs
   const [logsDialog, setLogsDialog] = useState({ open: false, logs: [], ruleName: "" });
@@ -132,10 +119,10 @@ export default function AutomationRulesPage() {
       cooldown_seconds: 300,
       is_active: true,
     });
-    setDialog({ open: true, rule: null });
+    dialog.open(null);
   };
 
-  const openEdit = (rule) => {
+  const openEdit = async (rule) => {
     setForm({
       name: rule.name,
       description: rule.description || "",
@@ -145,11 +132,13 @@ export default function AutomationRulesPage() {
       cooldown_seconds: rule.cooldown_seconds || 300,
       is_active: rule.is_active,
     });
-    // Pre-load sensors for conditions
-    rule.conditions.forEach((c) => {
-      if (c.device_id) getSensorsForDevice(c.device_id);
-    });
-    setDialog({ open: true, rule });
+    // Pre-load sensors for all conditions before opening dialog
+    await Promise.all(
+      rule.conditions
+        .filter((c) => c.device_id)
+        .map((c) => getSensorsForDevice(c.device_id))
+    );
+    dialog.open(rule);
   };
 
   const handleToggle = async (id) => {
@@ -185,14 +174,14 @@ export default function AutomationRulesPage() {
     };
 
     try {
-      if (dialog.rule) {
-        await apiClient.put(`/api/rules/${dialog.rule._id}`, payload);
+      if (dialog.state.item) {
+        await apiClient.put(`/api/rules/${dialog.state.item._id}`, payload);
         enqueueSnackbar("แก้ไขกฎสำเร็จ", { variant: "success" });
       } else {
         await apiClient.post("/api/rules", payload);
         enqueueSnackbar("สร้างกฎสำเร็จ", { variant: "success" });
       }
-      setDialog({ open: false, rule: null });
+      dialog.close();
       fetchRules();
     } catch {
       enqueueSnackbar("เกิดข้อผิดพลาด", { variant: "error" });
@@ -202,9 +191,9 @@ export default function AutomationRulesPage() {
 
   const handleDelete = async () => {
     try {
-      await apiClient.delete(`/api/rules/${deleteDialog.id}`);
+      await apiClient.delete(`/api/rules/${deleteDialog.state.item}`);
       enqueueSnackbar("ลบกฎแล้ว", { variant: "success" });
-      setDeleteDialog({ open: false, id: null });
+      deleteDialog.close();
       fetchRules();
     } catch {
       enqueueSnackbar("ลบไม่สำเร็จ", { variant: "error" });
@@ -266,7 +255,7 @@ export default function AutomationRulesPage() {
   const getOperatorLabel = (op) =>
     OPERATORS.find((o) => o.value === op)?.label || op;
 
-  if (loading) return <BoxLoading />;
+  if (loading) return <SkeletonCardGrid count={4} height={180} />;
 
   return (
     <Box>
@@ -381,7 +370,7 @@ export default function AutomationRulesPage() {
                       size="small"
                       color="error"
                       onClick={() =>
-                        setDeleteDialog({ open: true, id: rule._id })
+                        deleteDialog.open(rule._id)
                       }
                     >
                       <DeleteOutlineIcon fontSize="small" />
@@ -470,13 +459,13 @@ export default function AutomationRulesPage() {
 
       {/* Create / Edit Dialog */}
       <Dialog
-        open={dialog.open}
-        onClose={() => setDialog({ open: false, rule: null })}
+        open={dialog.state.open}
+        onClose={dialog.close}
         fullWidth
         maxWidth="md"
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
-          {dialog.rule ? "แก้ไขกฎ" : "สร้างกฎใหม่"}
+          {dialog.state.item ? "แก้ไขกฎ" : "สร้างกฎใหม่"}
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3}>
@@ -774,11 +763,9 @@ export default function AutomationRulesPage() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setDialog({ open: false, rule: null })}>
-            ยกเลิก
-          </Button>
+          <Button onClick={dialog.close}>ยกเลิก</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {dialog.rule ? "บันทึก" : "สร้าง"}
+            {dialog.state.item ? "บันทึก" : "สร้าง"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -846,10 +833,10 @@ export default function AutomationRulesPage() {
       </Dialog>
 
       <DialogConfirm
-        open={deleteDialog.open}
+        open={deleteDialog.state.open}
         title="ลบกฎอัตโนมัติ?"
         content="ต้องการลบกฎนี้หรือไม่? การลบจะไม่สามารถกู้คืนได้"
-        handleClose={() => setDeleteDialog({ open: false, id: null })}
+        handleClose={deleteDialog.close}
         handleConfirm={handleDelete}
       />
     </Box>

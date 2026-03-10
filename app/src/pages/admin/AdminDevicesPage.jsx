@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   TableRow,
   TableCell,
@@ -21,6 +22,8 @@ import AdminSearchBar from "../../components/admin/AdminSearchBar";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import ExportButton from "../../components/admin/ExportButton";
 import apiClient from "../../services/apiClient";
+import { formatDate } from "../../utils/dateFormat";
+import DialogConfirm from "../../components/DialogConfirm";
 
 const COLUMNS = [
   { id: "name", label: "ชื่ออุปกรณ์" },
@@ -39,11 +42,6 @@ const CSV_COLUMNS = [
   { key: "last_seen", label: "เชื่อมต่อล่าสุด" },
 ];
 
-function formatDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
-}
-
 export default function AdminDevicesPage() {
   const { enqueueSnackbar } = useSnackbar();
   const [devices, setDevices] = useState([]);
@@ -52,8 +50,8 @@ export default function AdminDevicesPage() {
   const [onlineFilter, setOnlineFilter] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Edit dialog
-  const [editDialog, setEditDialog] = useState({ open: false, device: null });
+  const editDialog = useDialogState();
+  const deleteDialog = useDialogState();
   const [editForm, setEditForm] = useState({ name: "", version: "" });
 
   const fetchDevices = useCallback(async () => {
@@ -81,24 +79,23 @@ export default function AdminDevicesPage() {
 
   const openEdit = (device) => {
     setEditForm({ name: device.name, version: device.version || "" });
-    setEditDialog({ open: true, device });
+    editDialog.open(device);
   };
 
   const handleSaveEdit = async () => {
     try {
-      await apiClient.put(`/api/admin/devices/${editDialog.device._id}`, editForm);
+      await apiClient.put(`/api/admin/devices/${editDialog.state.item._id}`, editForm);
       enqueueSnackbar("แก้ไขอุปกรณ์สำเร็จ", { variant: "success" });
-      setEditDialog({ open: false, device: null });
+      editDialog.close();
       fetchDevices();
     } catch {
       enqueueSnackbar("แก้ไขอุปกรณ์ไม่สำเร็จ", { variant: "error" });
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("ยืนยันลบอุปกรณ์นี้?")) return;
+  const handleConfirmDelete = async () => {
     try {
-      await apiClient.delete(`/api/admin/devices/${id}`);
+      await apiClient.delete(`/api/admin/devices/${deleteDialog.state.item}`);
       enqueueSnackbar("ลบอุปกรณ์สำเร็จ", { variant: "success" });
       fetchDevices();
     } catch {
@@ -165,7 +162,7 @@ export default function AdminDevicesPage() {
               <IconButton size="small" onClick={() => openEdit(device)} title="แก้ไข">
                 <EditIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" color="error" onClick={() => handleDelete(device._id)} title="ลบ">
+              <IconButton size="small" color="error" onClick={() => deleteDialog.open(device._id)} title="ลบ">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </TableCell>
@@ -173,8 +170,18 @@ export default function AdminDevicesPage() {
         )}
       />
 
+      <DialogConfirm
+        open={deleteDialog.state.open}
+        handleClose={deleteDialog.close}
+        handleConfirm={handleConfirmDelete}
+        title="ลบอุปกรณ์"
+        content="ยืนยันลบอุปกรณ์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบ"
+        confirmColor="error"
+      />
+
       {/* Edit Dialog */}
-      <Dialog open={editDialog.open} onClose={() => setEditDialog({ open: false, device: null })} maxWidth="sm" fullWidth>
+      <Dialog open={editDialog.state.open} onClose={editDialog.close} maxWidth="sm" fullWidth>
         <DialogTitle>แก้ไขอุปกรณ์</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
@@ -190,11 +197,11 @@ export default function AdminDevicesPage() {
               onChange={(e) => setEditForm((f) => ({ ...f, version: e.target.value }))}
               fullWidth
             />
-            <TextField label="Device ID" value={editDialog.device?.device_id || ""} disabled fullWidth />
+            <TextField label="Device ID" value={editDialog.state.item?.device_id || ""} disabled fullWidth />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog({ open: false, device: null })}>ยกเลิก</Button>
+          <Button onClick={editDialog.close}>ยกเลิก</Button>
           <Button variant="contained" onClick={handleSaveEdit}>บันทึก</Button>
         </DialogActions>
       </Dialog>

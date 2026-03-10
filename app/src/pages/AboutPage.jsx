@@ -36,7 +36,7 @@ export default function AboutPage() {
             </Avatar>
             <Box>
               <Typography variant="h5" fontWeight={700}>
-                Smart Chu Farm
+                ChuFarm
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 ระบบจัดการฟาร์มอัจฉริยะ
@@ -44,7 +44,7 @@ export default function AboutPage() {
             </Box>
           </Stack>
           <Typography variant="body1" color="text.secondary">
-            Smart Chu Farm เป็นระบบ IoT สำหรับติดตามและจัดการฟาร์มอัจฉริยะ
+            ChuFarm เป็นระบบ IoT สำหรับติดตามและจัดการฟาร์มอัจฉริยะ
             สามารถเชื่อมต่อเซ็นเซอร์หลากหลายประเภท ติดตามข้อมูลแบบ Real-time
             ผ่าน MQTT และดูประวัติข้อมูลย้อนหลังผ่านกราฟ
           </Typography>

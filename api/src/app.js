@@ -55,7 +55,7 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'ERROR', data: 'Too many requests, please try again later' },
 });
-app.use(globalLimiter);
+// app.use(globalLimiter);
 
 app.use(express.json({ limit: config.bodyLimit }));
 app.use(express.urlencoded({ limit: config.bodyLimit, extended: true }));

@@ -7,7 +7,7 @@ const UserSetting = require('../models/userSettingModel');
 /**
  * Pending link codes — maps code → { user_id, chat_id, expires }
  * Code is generated when user calls /start in Telegram,
- * then verified when user submits it in the SmartFarm app.
+ * then verified when user submits it in the ChuFarm app.
  *
  * Flow A (bot-initiated): user /start → bot replies with code → user enters code in app
  * Flow B (app-initiated): app generates code → user sends code to bot → bot links
@@ -111,9 +111,9 @@ async function handleWebhookUpdate(update) {
   // /start — welcome + instructions
   if (text === '/start') {
     await sendMessage(chatId,
-      '<b>SmartFarm Alert Bot</b>\n\n' +
-      'เชื่อมต่อบัญชี SmartFarm ของคุณ:\n' +
-      '1. ไปที่หน้า Settings ใน SmartFarm app\n' +
+      '<b>ChuFarm Alert Bot</b>\n\n' +
+      'เชื่อมต่อบัญชี ChuFarm ของคุณ:\n' +
+      '1. ไปที่หน้า Settings ใน ChuFarm app\n' +
       '2. กด "เชื่อมต่อ Telegram"\n' +
       '3. คัดลอกรหัส 6 หลักมาส่งที่นี่\n\n' +
       'หรือพิมพ์ /link รหัส เช่น <code>/link A3F82K</code>'
@@ -131,7 +131,7 @@ async function handleWebhookUpdate(update) {
 
     const pending = pendingLinks.get(code);
     if (!pending || Date.now() > pending.expires) {
-      await sendMessage(chatId, 'รหัสไม่ถูกต้องหรือหมดอายุ กรุณาสร้างรหัสใหม่ใน SmartFarm app');
+      await sendMessage(chatId, 'รหัสไม่ถูกต้องหรือหมดอายุ กรุณาสร้างรหัสใหม่ใน ChuFarm app');
       pendingLinks.delete(code);
       return;
     }
@@ -148,7 +148,7 @@ async function handleWebhookUpdate(update) {
     );
     pendingLinks.delete(code);
 
-    await sendMessage(chatId, 'เชื่อมต่อสำเร็จ! คุณจะได้รับแจ้งเตือนจาก SmartFarm ที่นี่แล้ว');
+    await sendMessage(chatId, 'เชื่อมต่อสำเร็จ! คุณจะได้รับแจ้งเตือนจาก ChuFarm ที่นี่แล้ว');
     logger.info('Telegram account linked', { user_id: pending.user_id, chat_id: chatId });
     return;
   }
@@ -164,7 +164,7 @@ async function handleWebhookUpdate(update) {
     setting.telegram_linked_at = null;
     setting.notification.telegram = false;
     await setting.save();
-    await sendMessage(chatId, 'ยกเลิกการเชื่อมต่อแล้ว จะไม่ได้รับแจ้งเตือนจาก SmartFarm อีก');
+    await sendMessage(chatId, 'ยกเลิกการเชื่อมต่อแล้ว จะไม่ได้รับแจ้งเตือนจาก ChuFarm อีก');
     logger.info('Telegram account unlinked', { user_id: setting.user_id, chat_id: chatId });
     return;
   }
@@ -178,7 +178,7 @@ async function handleWebhookUpdate(update) {
         `แจ้งเตือน: ${setting.notification?.telegram ? 'เปิด' : 'ปิด'}`
       );
     } else {
-      await sendMessage(chatId, 'ยังไม่ได้เชื่อมต่อบัญชี SmartFarm\nพิมพ์ /start เพื่อดูวิธีเชื่อมต่อ');
+      await sendMessage(chatId, 'ยังไม่ได้เชื่อมต่อบัญชี ChuFarm\nพิมพ์ /start เพื่อดูวิธีเชื่อมต่อ');
     }
     return;
   }

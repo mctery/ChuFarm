@@ -85,7 +85,7 @@ module.exports = {
   ],
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   resendApiKey: process.env.RESEND_API_KEY,
-  resendFrom: process.env.RESEND_FROM || 'SmartFarm <onboarding@resend.dev>',
+  resendFrom: process.env.RESEND_FROM || 'ChuFarm <noreply@chufarm.site>',
   appUrl: process.env.APP_URL || 'http://localhost:5173',
   resetTokenExpiryMs: 60 * 60 * 1000, // 1 hour
   corsOrigin: process.env.FRONTEND,

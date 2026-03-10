@@ -6,6 +6,7 @@ import AdminDataTable from "../../components/admin/AdminDataTable";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import ExportButton from "../../components/admin/ExportButton";
 import apiClient from "../../services/apiClient";
+import { formatDate } from "../../utils/dateFormat";
 
 const EVENT_COLORS = {
   online: "success",
@@ -30,11 +31,6 @@ const CSV_COLUMNS = [
   { key: "device_id", label: "Device ID" },
   { key: "event", label: "เหตุการณ์" },
 ];
-
-function formatDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
-}
 
 export default function AdminDeviceLogsPage() {
   const { enqueueSnackbar } = useSnackbar();

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   TableRow,
   TableCell,
@@ -21,6 +22,7 @@ import AdminSearchBar from "../../components/admin/AdminSearchBar";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import ExportButton from "../../components/admin/ExportButton";
 import apiClient from "../../services/apiClient";
+import DialogConfirm from "../../components/DialogConfirm";
 
 const SENSOR_TYPES = ["temperature", "humidity", "light", "soil"];
 
@@ -58,7 +60,8 @@ export default function AdminSensorsPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [editDialog, setEditDialog] = useState({ open: false, sensor: null });
+  const editDialog = useDialogState();
+  const deleteDialog = useDialogState();
   const [editForm, setEditForm] = useState({ sensor_name: "", unit: "", min: "", max: "" });
 
   const fetchSensors = useCallback(async () => {
@@ -91,7 +94,7 @@ export default function AdminSensorsPage() {
       min: sensor.min ?? "",
       max: sensor.max ?? "",
     });
-    setEditDialog({ open: true, sensor });
+    editDialog.open(sensor);
   };
 
   const handleSaveEdit = async () => {
@@ -101,19 +104,18 @@ export default function AdminSensorsPage() {
       else payload.min = null;
       if (payload.max !== "") payload.max = Number(payload.max);
       else payload.max = null;
-      await apiClient.put(`/api/admin/sensors/${editDialog.sensor._id}`, payload);
+      await apiClient.put(`/api/admin/sensors/${editDialog.state.item._id}`, payload);
       enqueueSnackbar("แก้ไขเซ็นเซอร์สำเร็จ", { variant: "success" });
-      setEditDialog({ open: false, sensor: null });
+      editDialog.close();
       fetchSensors();
     } catch {
       enqueueSnackbar("แก้ไขเซ็นเซอร์ไม่สำเร็จ", { variant: "error" });
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("ยืนยันลบเซ็นเซอร์นี้?")) return;
+  const handleConfirmDelete = async () => {
     try {
-      await apiClient.delete(`/api/admin/sensors/${id}`);
+      await apiClient.delete(`/api/admin/sensors/${deleteDialog.state.item}`);
       enqueueSnackbar("ลบเซ็นเซอร์สำเร็จ", { variant: "success" });
       fetchSensors();
     } catch {
@@ -172,7 +174,7 @@ export default function AdminSensorsPage() {
               <IconButton size="small" onClick={() => openEdit(sensor)} title="แก้ไข">
                 <EditIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" color="error" onClick={() => handleDelete(sensor._id)} title="ลบ">
+              <IconButton size="small" color="error" onClick={() => deleteDialog.open(sensor._id)} title="ลบ">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </TableCell>
@@ -180,8 +182,18 @@ export default function AdminSensorsPage() {
         )}
       />
 
+      <DialogConfirm
+        open={deleteDialog.state.open}
+        handleClose={deleteDialog.close}
+        handleConfirm={handleConfirmDelete}
+        title="ลบเซ็นเซอร์"
+        content="ยืนยันลบเซ็นเซอร์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบ"
+        confirmColor="error"
+      />
+
       {/* Edit Dialog */}
-      <Dialog open={editDialog.open} onClose={() => setEditDialog({ open: false, sensor: null })} maxWidth="sm" fullWidth>
+      <Dialog open={editDialog.state.open} onClose={editDialog.close} maxWidth="sm" fullWidth>
         <DialogTitle>แก้ไขเซ็นเซอร์</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
@@ -216,7 +228,7 @@ export default function AdminSensorsPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog({ open: false, sensor: null })}>ยกเลิก</Button>
+          <Button onClick={editDialog.close}>ยกเลิก</Button>
           <Button variant="contained" onClick={handleSaveEdit}>บันทึก</Button>
         </DialogActions>
       </Dialog>

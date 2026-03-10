@@ -1,7 +1,7 @@
 # SmartFarm UI/UX Redesign Roadmap
 
 > วิเคราะห์ระบบทั้งหมดและวางแผนปรับปรุง UI/UX ทุกหน้าจอ
-> สถานะ: **In Progress** | วันที่วิเคราะห์: 5 มี.ค. 2569 | อัปเดตล่าสุด: 9 มี.ค. 2569
+> สถานะ: **In Progress** | วันที่วิเคราะห์: 5 มี.ค. 2569 | อัปเดตล่าสุด: 10 มี.ค. 2569 (Session 2)
 
 ---
 
@@ -12,24 +12,28 @@
 - **Backend:** Express.js, MongoDB, MQTT, Socket.IO, JWT Auth, RBAC
 - **Layout:** Toolpad Core DashboardLayout (sidebar + appbar)
 
-### หน้าจอทั้งหมด (23 หน้า)
+### หน้าจอทั้งหมด (28 หน้า)
 | กลุ่ม | หน้าจอ | สถานะ UX |
 |-------|--------|----------|
 | Auth | Login, Register, Forgot Password, Reset Password | ปรับปรุงแล้ว |
 | หลัก | Dashboard, Devices, GridStack, Sensor History | ปรับปรุงแล้ว |
-| ใหม่ | Notifications, Settings | สร้างใหม่แล้ว |
+| ใหม่ | Notifications, Settings, Thresholds, AutomationRules, Schedules | สร้างใหม่แล้ว |
+| ใหม่ (Session 2) | **Farms, FarmDetail, Analytics** | **สร้างใหม่แล้ว** |
 | ข้อมูล | About, Help, 404 | ดีอยู่แล้ว |
 | Admin | Dashboard, Users, Devices, Sensors, Notifications, AuditLogs, DeviceLogs, Settings, Menus | ปรับปรุงแล้ว |
 
 ### ฟีเจอร์ Backend ที่ยังไม่มี UI
 | ฟีเจอร์ | API พร้อม | มี UI |
 |---------|----------|-------|
-| Automation Rules (if-then) | Yes | **No** |
-| Schedules (cron jobs) | Yes | **No** |
-| Sensor Thresholds (alerts) | Yes | **No** |
+| Automation Rules (if-then) | Yes | **Yes** (สร้างแล้ว) |
+| Schedules (cron jobs) | Yes | **Yes** (สร้างแล้ว) |
+| Sensor Thresholds (alerts) | Yes | **Yes** (สร้างแล้ว) |
 | Notifications (user-facing) | Yes | **Yes** (สร้างแล้ว) |
-| User Settings (timezone, lang) | Yes | **Yes** (สร้างแล้ว) |
-| Device Commands (MQTT) | Yes | **No** |
+| User Settings + Telegram | Yes | **Yes** (สร้างแล้ว) |
+| Device Commands (MQTT) | Yes | **Yes** (DeviceCommandDialog — Session 2) |
+| Farms & Zones management | Yes | **Yes** (FarmsPage + FarmDetailPage — Session 2) |
+| Analytics (trend, compare) | Yes | **Yes** (AnalyticsPage — Session 2) |
+| Device Profiles | Yes | **No** |
 | Weather (current) | Yes | **Yes** (Dashboard widget) |
 
 ---
@@ -181,34 +185,38 @@
 **สิ่งที่ทำแล้ว:**
 - [x] โปรไฟล์ (แก้ไขชื่อ-นามสกุล)
 - [x] เปลี่ยนรหัสผ่าน (show/hide toggle, mismatch validation)
-- [x] ตั้งค่าการแจ้งเตือน (in-app, email, LINE toggles)
+- [x] ตั้งค่าการแจ้งเตือน (in-app, email, Telegram toggles)
 - [x] Quiet Hours (เวลาปิดแจ้งเตือน)
-- [x] LINE Notify (connect/disconnect/test token)
+- [x] Telegram Bot (generate link code / unlink) — แทนที่ LINE Notify
 - [x] Profile menu links to Settings page
 
 ---
 
-## Phase 6: Admin Pages -- DONE
+## Phase 6: Admin Pages -- DONE (บางส่วน)
 
 **สิ่งที่ทำแล้ว:**
 - [x] AdminUsersPage ใช้ AdminPageWrapper (เดิมไม่ใช้)
 - [x] แก้ deprecated `InputProps` -> `slotProps.input` ใน AdminUsersPage
 - [x] แก้ `DialogContent sx={{ pt: "16px !important" }}` -> `DialogContent dividers` ใน 4 ไฟล์ (AdminDevices, AdminSensors, AdminNotifications, AdminMenus)
+- [x] BulkActionBar component สร้างแล้ว (`src/components/admin/BulkActionBar.jsx`)
+- [x] AdminFilterBar, AdminSearchBar components สร้างแล้ว
+- [x] **ผูก BulkActionBar เข้า AdminUsersPage** (row checkboxes + select all + bulk CSV export — Session 2)
 
 **ยังไม่ได้ทำ:**
-- [ ] เพิ่ม bulk actions, user detail drawer
 - [ ] ปรับ tables ให้มี sticky header
 - [ ] เพิ่ม mini charts ใน Admin Dashboard
 
 ---
 
-## Phase 7-8: Static Pages & Shared Components -- REVIEWED
+## Phase 7-8: Static Pages & Shared Components -- บางส่วนเสร็จ
 
 About, Help, 404 pages: ไม่ต้องแก้ไข (สถานะดีอยู่แล้ว)
 
+**สิ่งที่ทำแล้ว (Session 2):**
+- [x] **Skeleton loading** (`SkeletonCardGrid` component) แทน `BoxLoading` spinner ใน ThresholdsPage, AutomationRulesPage, SchedulesPage, FarmsPage, FarmDetailPage
+
 **ยังไม่ได้ทำ:**
-- [ ] สร้าง shared components (PageHeader, EmptyState, SearchFilterBar)
-- [ ] เพิ่ม skeleton loading แทน spinner
+- [ ] สร้าง shared EmptyState component
 - [ ] ปรับ DeviceFormDialog เพิ่ม image upload
 
 ---
@@ -227,9 +235,10 @@ About, Help, 404 pages: ไม่ต้องแก้ไข (สถานะด
 | Phase 5.3 | Automation Rules | DONE |
 | Phase 5.4 | Schedules | DONE |
 | Phase 6 | Admin Pages | DONE (บางส่วน) |
-| Phase 7-8 | Static + Shared Components | ยังไม่ได้ทำ |
+| Phase 7-8 | Static + Shared Components | บางส่วนเสร็จ |
+| **Session 2** | **Bug Fixes + Refactor + New Features** | **DONE** |
 
-### ไฟล์ที่แก้ไข/สร้าง (รอบนี้)
+### ไฟล์ที่แก้ไข/สร้าง (Session 1)
 
 **แก้ไข (27 ไฟล์):**
 - `src/layouts/DashboardLayout.jsx` - Notification bell, profile dropdown, "ดูทั้งหมด" link
@@ -249,9 +258,65 @@ About, Help, 404 pages: ไม่ต้องแก้ไข (สถานะด
 - `src/main.jsx` - NotificationsPage, SettingsPage, ThresholdsPage, AutomationRulesPage, SchedulesPage routes
 - `src/pages/farm/SensorHistoryPage.jsx` - Export CSV button
 
-**สร้างใหม่ (5 ไฟล์):**
+**สร้างใหม่ (11 ไฟล์):**
 - `src/pages/NotificationsPage.jsx` - Notification Center
-- `src/pages/SettingsPage.jsx` - User Settings
+- `src/pages/SettingsPage.jsx` - User Settings + Telegram (แทนที่ LINE Notify)
 - `src/pages/farm/ThresholdsPage.jsx` - Sensor Thresholds (CRUD)
 - `src/pages/farm/AutomationRulesPage.jsx` - Automation Rules Builder
 - `src/pages/farm/SchedulesPage.jsx` - Schedule Management
+- `src/components/admin/BulkActionBar.jsx` - Bulk action toolbar
+- `src/components/admin/AdminFilterBar.jsx` - Filter bar
+- `src/components/admin/AdminSearchBar.jsx` - Search bar
+- `src/components/admin/AdminDataTable.jsx` - Reusable admin table
+- `src/components/admin/ExportButton.jsx` - CSV export button
+- `src/components/ListButtonMenu.jsx` - List button menu component
+
+---
+
+### ไฟล์ที่แก้ไข/สร้าง (Session 2)
+
+**Bug Fixes:**
+- `src/pages/admin/AdminUsersPage.jsx` - เพิ่ม `Alert` import (crash fix)
+- `src/layouts/DashboardLayout.jsx` - `useRef` stable ref, `APP_CONFIG.NOTIF_POLL_INTERVAL`
+- `src/pages/DashboardPage.jsx` - `Promise.all` parallel fetch, shared constants
+- `src/pages/farm/ThresholdsPage.jsx` - min < max validation
+- `src/pages/farm/AutomationRulesPage.jsx` - await getSensors race condition fix
+
+**Refactor:**
+- `src/services/global_variable.jsx` - เพิ่ม `SEVERITY_COLORS`, `APP_CONFIG`, `STATUS`
+- `src/constants/automation.js` - สร้างใหม่ (OPERATORS, ACTION_TYPES, CRON_PRESETS, DEFAULT_TIMEZONE)
+- `src/pages/farm/SchedulesPage.jsx` - ใช้ constants จาก automation.js
+- `src/pages/farm/AutomationRulesPage.jsx` - ใช้ constants จาก automation.js
+
+**New Features:**
+- `src/services/device_service.js` - เพิ่ม `SysSendDeviceCommand`
+- `src/components/DeviceCommandDialog.jsx` - สร้างใหม่ (ส่งคำสั่ง MQTT)
+- `src/components/DeviceWidget.jsx` - เพิ่มปุ่ม "ส่งคำสั่ง" (disabled เมื่อ offline)
+- `src/services/farm_service.js` - สร้างใหม่ (Farms + Zones CRUD)
+- `src/services/analytics_service.js` - สร้างใหม่ (summary, trend, compare, recommendations)
+- `src/pages/farm/FarmsPage.jsx` - สร้างใหม่ (Farm list + CRUD)
+- `src/pages/farm/FarmDetailPage.jsx` - สร้างใหม่ (Farm detail + Zone management)
+- `src/pages/farm/AnalyticsPage.jsx` - สร้างใหม่ (4 tabs: summary/trend/compare/recommendations)
+- `src/constants/routes.js` - เพิ่ม FARMS, FARM_DETAIL, ANALYTICS
+- `src/main.jsx` - เพิ่ม routes ใหม่ 3 เส้น
+
+**UX Polish:**
+- `src/pages/admin/AdminUsersPage.jsx` - row checkboxes + select all + BulkActionBar + bulk CSV export
+- `src/components/SkeletonCardGrid.jsx` - สร้างใหม่ (skeleton loading component)
+- `src/pages/farm/ThresholdsPage.jsx` - ใช้ SkeletonCardGrid
+- `src/pages/farm/AutomationRulesPage.jsx` - ใช้ SkeletonCardGrid
+- `src/pages/farm/SchedulesPage.jsx` - ใช้ SkeletonCardGrid
+- `src/pages/farm/FarmsPage.jsx` - ใช้ SkeletonCardGrid
+- `src/pages/farm/FarmDetailPage.jsx` - ใช้ SkeletonCardGrid
+
+---
+
+## งานที่เหลือ (Backlog)
+
+| งาน | Priority | หมายเหตุ |
+|-----|----------|---------|
+| Device Profile management | ต่ำ | Admin feature |
+| Auth 2-column layout + remember me | ต่ำ | UX nice-to-have |
+| Sticky header ใน Admin tables | ต่ำ | UX polish |
+| Mini charts ใน Admin Dashboard | ต่ำ | UX polish |
+| DeviceFormDialog image upload | ต่ำ | UX enhancement |

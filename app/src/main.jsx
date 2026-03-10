@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import App from "./App";
 import Layout from "./layouts/DashboardLayout";
+import AdminLayout from "./layouts/AdminLayout";
 import BoxLoading from "./components/BoxLoading";
 
 // Lazy-loaded pages
@@ -33,6 +34,9 @@ const AdminSettingsPage = React.lazy(() => import("./pages/admin/AdminSettingsPa
 const ThresholdsPage = React.lazy(() => import("./pages/farm/ThresholdsPage"));
 const AutomationRulesPage = React.lazy(() => import("./pages/farm/AutomationRulesPage"));
 const SchedulesPage = React.lazy(() => import("./pages/farm/SchedulesPage"));
+const FarmsPage = React.lazy(() => import("./pages/farm/FarmsPage"));
+const FarmDetailPage = React.lazy(() => import("./pages/farm/FarmDetailPage"));
+const AnalyticsPage = React.lazy(() => import("./pages/farm/AnalyticsPage"));
 const PageNotFound = React.lazy(() => import("./pages/PageNotFound"));
 
 function SuspenseWrapper({ children }) {
@@ -122,6 +126,23 @@ const router = createBrowserRouter([
             path: "farm_control_system/schedules",
             ...lazyElement(SchedulesPage),
           },
+          {
+            path: "farm_control_system/farms",
+            ...lazyElement(FarmsPage),
+          },
+          {
+            path: "farm_control_system/farms/:farmId",
+            ...lazyElement(FarmDetailPage),
+          },
+          {
+            path: "farm_control_system/analytics",
+            ...lazyElement(AnalyticsPage),
+          },
+        ],
+      },
+      {
+        Component: AdminLayout,
+        children: [
           {
             path: "admin/dashboard",
             ...lazyElement(AdminDashboardPage),

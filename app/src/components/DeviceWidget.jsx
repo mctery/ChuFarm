@@ -20,6 +20,9 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CircleIcon from "@mui/icons-material/Circle";
 import DevicesIcon from "@mui/icons-material/Devices";
+import TerminalIcon from "@mui/icons-material/Terminal";
+
+import DeviceCommandDialog from "./DeviceCommandDialog";
 
 import { SocketSubscribe } from "../services/socket_service";
 import { SIGNAL_ICON, RSSI_THRESHOLD } from "../services/global_variable";
@@ -27,6 +30,7 @@ import { SIGNAL_ICON, RSSI_THRESHOLD } from "../services/global_variable";
 export default function DeviceWidget({ device, onEdit, onDelete }) {
   const [realtime, setRealtime] = useState(null);
   const [signal, setSignal] = useState(SIGNAL_ICON.OFFLINE);
+  const [cmdOpen, setCmdOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -163,6 +167,18 @@ export default function DeviceWidget({ device, onEdit, onDelete }) {
                 <SettingsIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Tooltip title={isOnline ? "ส่งคำสั่ง" : "อุปกรณ์ออฟไลน์"}>
+              <span>
+                <IconButton
+                  size="small"
+                  color="secondary"
+                  disabled={!isOnline}
+                  onClick={() => setCmdOpen(true)}
+                >
+                  <TerminalIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Stack>
           <Tooltip title="ลบอุปกรณ์">
             <IconButton
@@ -175,6 +191,12 @@ export default function DeviceWidget({ device, onEdit, onDelete }) {
           </Tooltip>
         </Stack>
       </CardContent>
+
+      <DeviceCommandDialog
+        open={cmdOpen}
+        device={device}
+        onClose={() => setCmdOpen(false)}
+      />
     </Card>
   );
 }

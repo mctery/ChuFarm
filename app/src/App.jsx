@@ -57,9 +57,9 @@ export default function App() {
             navigation={navigation}
             branding={{
               logo: <img src="./logo.png" alt="logo" />,
-              title: "Smart Chu Farm",
+              title: "ChuFarm",
               homeUrl: "/dashboard",
-              description: "Smart Chu Farm - ระบบจัดการฟาร์มอัจฉริยะ",
+              description: "ChuFarm - ระบบจัดการฟาร์มอัจฉริยะ",
             }}
           >
             <Outlet />

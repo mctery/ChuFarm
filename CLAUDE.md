@@ -15,7 +15,23 @@ Each subdirectory has its own `CLAUDE.md` with detailed documentation:
 - **[api/CLAUDE.md](api/CLAUDE.md)** — API endpoints, models, middleware, MQTT, auth
 - **[app/CLAUDE.md](app/CLAUDE.md)** — Pages, services, components, patterns, routes
 
-## Quick Start
+## Deployment (fly.io)
+
+| Service | URL |
+|---------|-----|
+| API | https://chufarm-api.fly.dev |
+| App | https://chufarm-app.fly.dev |
+
+```bash
+# Re-deploy
+cd api && fly deploy --ha=false
+cd app && fly deploy --ha=false
+```
+
+> บน fly.io API ทำงาน **full mode** — HTTP + Socket.IO + MQTT + cron (ต่างจาก Vercel ที่เป็น serverless)
+> App secrets อยู่ใน fly.io dashboard, VITE_API baked-in ตอน build ผ่าน `[build.args]` ใน fly.toml
+
+## Quick Start (Local)
 
 ```bash
 # API (terminal 1)
@@ -87,6 +103,7 @@ RESEND_API_KEY="..."
 ```env
 VITE_API="http://localhost:3000"
 ```
+> **หมายเหตุ:** ไฟล์ `app/.env` ต้องสร้างเอง (ไม่ได้ commit เข้า repo) หากไม่มีไฟล์นี้ app จะเรียก API ผิด origin
 
 ## Database Models (19)
 

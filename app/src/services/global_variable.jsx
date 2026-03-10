@@ -170,6 +170,25 @@ export const ICON = {
     DELETE:     { icon: <DeleteIcon/>, color: "error" }, 
 };
 
+// Shared UI constants
+export const SEVERITY_COLORS = {
+  critical: "error",
+  warning: "warning",
+  info: "info",
+};
+
+export const APP_CONFIG = {
+  TIMEZONE: "Asia/Bangkok",
+  LOCALE: "th-TH",
+  NOTIF_POLL_INTERVAL: 30000,
+  WEATHER_CITY: "Bangkok",
+};
+
+export const STATUS = {
+  ACTIVE: "A",
+  DELETED: "D",
+};
+
 export const MQTT_TOPIC = [
   `device/+/temperature`,
   `device/+/humidity`,

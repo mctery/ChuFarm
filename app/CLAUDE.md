@@ -12,6 +12,22 @@ npm run lint      # ESLint
 npm run preview   # Preview production build
 ```
 
+## Deployment (fly.io)
+
+- **URL:** https://chufarm-app.fly.dev
+- Multi-stage Docker: Node 20 build → nginx 1.27 serve
+- Region: Singapore (`sin`), 256MB RAM
+- `VITE_API` baked-in at build time via `[build.args]` in [fly.toml](fly.toml)
+
+```bash
+# Deploy
+cd app && fly deploy --ha=false
+
+# Update API URL (triggers rebuild)
+# Edit fly.toml → [build.args] VITE_API = "..."
+# then fly deploy --ha=false
+```
+
 ## Tech Stack
 
 - **Framework:** React 19 (functional components + hooks only)
@@ -31,7 +47,7 @@ npm run preview   # Preview production build
 
 ```
 src/
-├── main.jsx                   # Entry: router + lazy imports (26 pages)
+├── main.jsx                   # Entry: router + lazy imports (25 pages)
 ├── App.jsx                    # Root: theme provider, navigation, context
 ├── theme.js                   # MUI theme (light/dark, Thai fonts, green primary)
 ├── layouts/
@@ -50,12 +66,14 @@ src/
 │   ├── GridStack/             # Widget dashboard (MqttContext, sensor widgets)
 │   │   ├── context/           # MqttProvider for real-time data
 │   │   └── sensors/           # GenericSensor, SensorCard, hooks
-│   ├── admin/                 # AdminPageWrapper, AdminDataTable, StatCard, etc.
+│   ├── admin/                 # AdminPageWrapper, AdminDataTable, AdminFilterBar,
+│   │                          # AdminSearchBar, BulkActionBar, ExportButton, StatCard
 │   ├── AuthLayout.jsx         # Auth page container
 │   ├── BoxLoading.jsx         # Spinner/loading component
-│   ├── DeviceWidget.jsx       # Device card
-│   ├── DeviceFormDialog.jsx   # Device CRUD dialog with image upload
+│   ├── DeviceWidget.jsx       # Device card (compact layout with action bar)
+│   ├── DeviceFormDialog.jsx   # Device CRUD dialog
 │   ├── DialogConfirm.jsx      # Confirmation modal
+│   ├── ListButtonMenu.jsx     # List button menu component
 │   └── ErrorBoundary.jsx      # Error boundary
 ├── services/
 │   ├── apiClient.js           # Axios: base URL, token, refresh, retry
@@ -170,7 +188,7 @@ export default function ExamplePage() {
 - Use `<DialogContent dividers>` instead of `sx={{ pt: "16px !important" }}`
 - Grid uses `size={{ xs: 12, sm: 6 }}` prop (not `item xs={12} sm={6}`)
 
-## Routes (26 pages)
+## Routes (25 pages)
 
 ### Auth (no layout)
 | Path | Component |

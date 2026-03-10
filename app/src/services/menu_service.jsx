@@ -72,7 +72,7 @@ function toNavItem(menu, parentPath = "") {
 
 /**
  * Build Toolpad-compatible navigation array from DB menus hierarchy.
- * Separates regular menus from admin menus with a divider + header.
+ * Only includes regular (non-admin) menus — admin area has its own layout.
  */
 export function buildNavigation(menus) {
   if (!Array.isArray(menus) || menus.length === 0) {
@@ -83,20 +83,11 @@ export function buildNavigation(menus) {
   }
 
   const regularMenus = menus.filter((m) => m.key !== ADMIN_KEY);
-  const adminMenus = menus.filter((m) => m.key === ADMIN_KEY);
 
-  const nav = [
+  return [
     { kind: "header", title: "เมนูหลัก" },
     ...regularMenus.map((m) => toNavItem(m)),
   ];
-
-  if (adminMenus.length > 0) {
-    nav.push({ kind: "divider" });
-    nav.push({ kind: "header", title: "ผู้ดูแลระบบ" });
-    nav.push(...adminMenus.map((m) => toNavItem(m)));
-  }
-
-  return nav;
 }
 
 /**

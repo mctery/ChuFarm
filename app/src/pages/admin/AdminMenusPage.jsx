@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   Box,
   Card,
@@ -27,12 +28,14 @@ import AddIcon from "@mui/icons-material/Add";
 import { useSnackbar } from "notistack";
 import AdminPageWrapper from "../../components/admin/AdminPageWrapper";
 import apiClient from "../../services/apiClient";
+import DialogConfirm from "../../components/DialogConfirm";
 
 export default function AdminMenusPage() {
   const { enqueueSnackbar } = useSnackbar();
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [dialog, setDialog] = useState({ open: false, menu: null });
+  const dialog = useDialogState();
+  const deleteDialog = useDialogState();
   const [form, setForm] = useState({ key: "", name: "", path: "", icon: "", parent_key: "", order: 0 });
 
   const fetchMenus = useCallback(async () => {
@@ -54,7 +57,7 @@ export default function AdminMenusPage() {
 
   const openCreate = () => {
     setForm({ key: "", name: "", path: "", icon: "", parent_key: "", order: 0 });
-    setDialog({ open: true, menu: null });
+    dialog.open(null);
   };
 
   const openEdit = (menu) => {
@@ -66,29 +69,28 @@ export default function AdminMenusPage() {
       parent_key: menu.parent_key || "",
       order: menu.order || 0,
     });
-    setDialog({ open: true, menu });
+    dialog.open(menu);
   };
 
   const handleSave = async () => {
     try {
-      if (dialog.menu) {
-        await apiClient.put(`/api/menus/${dialog.menu._id}`, form);
+      if (dialog.state.item) {
+        await apiClient.put(`/api/menus/${dialog.state.item._id}`, form);
         enqueueSnackbar("แก้ไขเมนูสำเร็จ", { variant: "success" });
       } else {
         await apiClient.post("/api/menus", form);
         enqueueSnackbar("สร้างเมนูสำเร็จ", { variant: "success" });
       }
-      setDialog({ open: false, menu: null });
+      dialog.close();
       fetchMenus();
     } catch {
       enqueueSnackbar("บันทึกเมนูไม่สำเร็จ", { variant: "error" });
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("ยืนยันลบเมนูนี้?")) return;
+  const handleConfirmDelete = async () => {
     try {
-      await apiClient.delete(`/api/menus/${id}`);
+      await apiClient.delete(`/api/menus/${deleteDialog.state.item}`);
       enqueueSnackbar("ลบเมนูสำเร็จ", { variant: "success" });
       fetchMenus();
     } catch {
@@ -143,7 +145,7 @@ export default function AdminMenusPage() {
                 <IconButton size="small" onClick={() => openEdit(parent)} title="แก้ไข">
                   <EditIcon fontSize="small" />
                 </IconButton>
-                <IconButton size="small" color="error" onClick={() => handleDelete(parent._id)} title="ลบ">
+                <IconButton size="small" color="error" onClick={() => deleteDialog.open(parent._id)} title="ลบ">
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Stack>
@@ -171,7 +173,7 @@ export default function AdminMenusPage() {
                     <IconButton size="small" onClick={() => openEdit(child)} title="แก้ไข">
                       <EditIcon sx={{ fontSize: 16 }} />
                     </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(child._id)} title="ลบ">
+                    <IconButton size="small" color="error" onClick={() => deleteDialog.open(child._id)} title="ลบ">
                       <DeleteIcon sx={{ fontSize: 16 }} />
                     </IconButton>
                   </Stack>
@@ -188,9 +190,19 @@ export default function AdminMenusPage() {
         </Typography>
       )}
 
+      <DialogConfirm
+        open={deleteDialog.state.open}
+        handleClose={deleteDialog.close}
+        handleConfirm={handleConfirmDelete}
+        title="ลบเมนู"
+        content="ยืนยันลบเมนูนี้? เมนูลูกทั้งหมดจะยังคงอยู่แต่จะสูญเสีย parent"
+        confirmText="ลบ"
+        confirmColor="error"
+      />
+
       {/* Create/Edit Dialog */}
-      <Dialog open={dialog.open} onClose={() => setDialog({ open: false, menu: null })} maxWidth="sm" fullWidth>
-        <DialogTitle>{dialog.menu ? "แก้ไขเมนู" : "เพิ่มเมนู"}</DialogTitle>
+      <Dialog open={dialog.state.open} onClose={dialog.close} maxWidth="sm" fullWidth>
+        <DialogTitle>{dialog.state.item ? "แก้ไขเมนู" : "เพิ่มเมนู"}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
             <TextField
@@ -198,7 +210,7 @@ export default function AdminMenusPage() {
               value={form.key}
               onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
               fullWidth
-              disabled={!!dialog.menu}
+              disabled={!!dialog.state.item}
             />
             <TextField
               label="ชื่อเมนู"
@@ -243,7 +255,7 @@ export default function AdminMenusPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialog({ open: false, menu: null })}>ยกเลิก</Button>
+          <Button onClick={dialog.close}>ยกเลิก</Button>
           <Button variant="contained" onClick={handleSave} disabled={!form.key || !form.name}>
             บันทึก
           </Button>

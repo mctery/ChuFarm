@@ -23,6 +23,7 @@ import { useSnackbar } from "notistack";
 import apiClient from "../services/apiClient";
 import { getUserInfo } from "../services/storage_service";
 import BoxLoading from "../components/BoxLoading";
+import { formatDate } from "../utils/dateFormat";
 
 const SEVERITY_COLORS = {
   critical: "error",
@@ -130,12 +131,6 @@ export default function NotificationsPage() {
       enqueueSnackbar("เกิดข้อผิดพลาด", { variant: "error" });
     }
   };
-
-  const formatDate = (dateStr) =>
-    new Date(dateStr).toLocaleString("th-TH", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
 
   return (
     <Box>

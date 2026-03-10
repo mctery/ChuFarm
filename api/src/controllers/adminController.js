@@ -554,6 +554,82 @@ const bulkDeleteDevices = asyncHandler(async (req, res) => {
   res.json({ message: 'OK', data: { deleted: result.modifiedCount } });
 });
 
+const createAdminUser = asyncHandler(async (req, res) => {
+  logger.debug('createAdminUser called');
+  const { first_name, last_name, email, password, role = 'user' } = req.body;
+
+  const existing = await User.findOne({ email, status: STATUS.ACTIVE });
+  if (existing) {
+    res.status(409);
+    throw new Error('Email already in use');
+  }
+
+  const bcrypt = require('bcrypt');
+  const { bcryptRounds } = require('../config');
+  const hashed = await bcrypt.hash(password, bcryptRounds);
+
+  const user = await User.create({
+    first_name,
+    last_name,
+    email,
+    password: hashed,
+    role,
+    status: STATUS.ACTIVE,
+  });
+
+  // Assign default permissions
+  const { DEFAULT_USER_PERMISSIONS } = require('../config/permissions');
+  const perms = role === 'admin' ? ['*'] : DEFAULT_USER_PERMISSIONS;
+  await Permission.create({ user_id: getUserId(user), permissions: perms });
+
+  const { password: _p, ...userData } = user.toObject();
+  res.status(201).json({ message: 'OK', data: userData });
+});
+
+const updateAdminUser = asyncHandler(async (req, res) => {
+  logger.debug('updateAdminUser called');
+  const { id } = req.params;
+  const { first_name, last_name, email, status } = req.body;
+
+  const update = {};
+  if (first_name !== undefined) update.first_name = first_name;
+  if (last_name !== undefined) update.last_name = last_name;
+  if (status !== undefined) update.status = status;
+
+  // Check email uniqueness if changed
+  if (email !== undefined) {
+    const conflict = await User.findOne({ email, _id: { $ne: id } });
+    if (conflict) {
+      res.status(409);
+      throw new Error('Email already in use');
+    }
+    update.email = email;
+  }
+
+  const user = await User.findByIdAndUpdate(id, update, { new: true }).select('-password');
+  if (!user) {
+    res.status(404);
+    throw new Error(`User not found: ${id}`);
+  }
+  res.json({ message: 'OK', data: user });
+});
+
+const deleteAdminUser = asyncHandler(async (req, res) => {
+  logger.debug('deleteAdminUser called');
+  const { id } = req.params;
+
+  const user = await User.findOneAndUpdate(
+    { _id: id, status: STATUS.ACTIVE },
+    { status: STATUS.DELETED },
+    { new: true }
+  );
+  if (!user) {
+    res.status(404);
+    throw new Error(`User not found: ${id}`);
+  }
+  res.json({ message: 'OK', data: { deleted: user._id } });
+});
+
 module.exports = {
   getAdminUsers,
   getAdminUser,
@@ -585,4 +661,8 @@ module.exports = {
   bulkUpdateRole,
   bulkDeleteUsers,
   bulkDeleteDevices,
+  // User CRUD
+  createAdminUser,
+  updateAdminUser,
+  deleteAdminUser,
 };

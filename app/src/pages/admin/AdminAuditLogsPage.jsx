@@ -21,6 +21,7 @@ import AdminSearchBar from "../../components/admin/AdminSearchBar";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import ExportButton from "../../components/admin/ExportButton";
 import apiClient from "../../services/apiClient";
+import { formatDate } from "../../utils/dateFormat";
 
 const ACTION_COLORS = {
   create: "success",
@@ -51,11 +52,6 @@ const CSV_COLUMNS = [
   { key: "resource_id", label: "Resource ID" },
   { key: "ip_address", label: "IP" },
 ];
-
-function formatDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
-}
 
 export default function AdminAuditLogsPage() {
   const { enqueueSnackbar } = useSnackbar();

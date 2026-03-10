@@ -1,11 +1,11 @@
 {
-  "name": "smartfarm-vite-app",
+  "name": "chufarm-app",
   "private": true,
   "version": "3.0.0",
-  "description": "Frontend for SmartFarm IoT platform — React 19, MUI 7, GridStack widgets, Socket.IO real-time, RBAC dynamic menus",
+  "description": "Frontend for ChuFarm IoT platform — React 19, MUI 7, GridStack widgets, Socket.IO real-time, RBAC dynamic menus",
   "type": "module",
-  "keywords": ["smartfarm", "iot", "react", "vite", "mui", "gridstack", "socket.io"],
-  "author": "SmartFarm Team",
+  "keywords": ["chufarm", "iot", "react", "vite", "mui", "gridstack", "socket.io"],
+  "author": "ChuFarm Team",
   "license": "ISC",
   "scripts": {
     "dev": "vite",

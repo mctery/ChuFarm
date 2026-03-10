@@ -53,7 +53,7 @@ export default function HelpPage() {
                 ศูนย์ช่วยเหลือ
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                คำถามที่พบบ่อยเกี่ยวกับการใช้งานระบบ Smart Chu Farm
+                คำถามที่พบบ่อยเกี่ยวกับการใช้งานระบบ ChuFarm
               </Typography>
             </Box>
           </Stack>
