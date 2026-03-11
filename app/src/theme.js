@@ -96,6 +96,10 @@ export function getTheme(mode) {
           root: {
             fontWeight: 600,
           },
+          sizeSmall: {
+            height: 20,
+            fontSize: "0.7rem",
+          },
         },
       },
       MuiContainer: {

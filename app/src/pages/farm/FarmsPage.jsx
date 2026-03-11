@@ -20,6 +20,8 @@ import {
   TextField,
   MenuItem,
   InputAdornment,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -30,6 +32,8 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 
 import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import EmptyState from "../../components/EmptyState";
+import ErrorStateCard from "../../components/ErrorStateCard";
 import DialogConfirm from "../../components/DialogConfirm";
 import { ROUTES } from "../../constants/routes";
 import {
@@ -58,8 +62,11 @@ const EMPTY_FORM = {
 export default function FarmsPage() {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(true);
   const [farms, setFarms] = useState([]);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
 
   // Dialog state
@@ -71,8 +78,13 @@ export default function FarmsPage() {
   const [deleting, setDeleting] = useState(false);
 
   const fetchFarms = useCallback(async () => {
-    const data = await SysGetFarms();
-    setFarms(data);
+    setError(false);
+    try {
+      const data = await SysGetFarms();
+      setFarms(data);
+    } catch {
+      setError(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -167,6 +179,7 @@ export default function FarmsPage() {
   );
 
   if (loading) return <SkeletonCardGrid count={8} height={150} />;
+  if (error) return <Box sx={{ p: 3 }}><ErrorStateCard message="โหลดข้อมูลฟาร์มไม่สำเร็จ" onRetry={fetchFarms} /></Box>;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -205,12 +218,17 @@ export default function FarmsPage() {
 
       {/* Farm Cards */}
       {filtered.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 8 }}>
-          <AgricultureIcon sx={{ fontSize: 64, color: "text.disabled", mb: 1 }} />
-          <Typography color="text.secondary">
-            {search ? "ไม่พบฟาร์มที่ค้นหา" : "ยังไม่มีฟาร์ม กดเพิ่มฟาร์มเพื่อเริ่มต้น"}
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={AgricultureIcon}
+          title={search ? "ไม่พบฟาร์มที่ค้นหา" : "ยังไม่มีฟาร์ม"}
+          description={!search ? "กดเพิ่มฟาร์มเพื่อเริ่มต้น" : undefined}
+          variant={search ? "search" : "page"}
+          action={!search ? (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+              เพิ่มฟาร์มแรก
+            </Button>
+          ) : undefined}
+        />
       ) : (
         <Grid container spacing={2}>
           {filtered.map((farm) => (
@@ -304,6 +322,7 @@ export default function FarmsPage() {
         onClose={dialog.close}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>{dialog.state.item ? "แก้ไขฟาร์ม" : "เพิ่มฟาร์มใหม่"}</DialogTitle>
         <DialogContent dividers>

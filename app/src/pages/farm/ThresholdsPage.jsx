@@ -20,6 +20,7 @@ import {
   InputAdornment,
   alpha,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -32,17 +33,19 @@ import { getUserInfo } from "../../services/storage_service";
 import { SysGetDevices } from "../../services/device_service";
 import { SysGetDeviceSensorsById } from "../../services/sensor_service";
 import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import EmptyState from "../../components/EmptyState";
 import DialogConfirm from "../../components/DialogConfirm";
 
 const NOTIFY_OPTIONS = [
   { value: "in_app", label: "ในแอป" },
-  { value: "push", label: "Push" },
+  { value: "push", label: "แจ้งเตือน" },
   { value: "both", label: "ทั้งหมด" },
 ];
 
 export default function ThresholdsPage() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const userId = getUserInfo()?.user_id;
 
   const [loading, setLoading] = useState(true);
@@ -210,31 +213,16 @@ export default function ThresholdsPage() {
       </Stack>
 
       {thresholds.length === 0 ? (
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            border: "2px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
-        >
-          <TuneIcon sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            ยังไม่มี Threshold
-          </Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
-            เพิ่ม threshold เพื่อรับแจ้งเตือนเมื่อค่าเซ็นเซอร์เกินค่าที่กำหนด
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={openCreate}
-            color="success"
-          >
-            เพิ่ม Threshold แรก
-          </Button>
-        </Paper>
+        <EmptyState
+          icon={TuneIcon}
+          title="ยังไม่มี Threshold"
+          description="เพิ่ม threshold เพื่อรับแจ้งเตือนเมื่อค่าเซ็นเซอร์เกินค่าที่กำหนด"
+          action={
+            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={openCreate} color="success">
+              เพิ่ม Threshold แรก
+            </Button>
+          }
+        />
       ) : (
         <Stack spacing={1.5}>
           {thresholds.map((t) => (
@@ -314,6 +302,7 @@ export default function ThresholdsPage() {
         onClose={dialog.close}
         fullWidth
         maxWidth="sm"
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
           {dialog.state.item ? "แก้ไข Threshold" : "เพิ่ม Threshold"}

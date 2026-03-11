@@ -19,6 +19,7 @@ import {
   Chip,
   Paper,
   alpha,
+  CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import TimelineIcon from "@mui/icons-material/Timeline";
@@ -37,7 +38,6 @@ import { createPortal } from "react-dom";
 import { GridStackWidgetCore } from "../../components/GridStack/GridStackWidgetCore";
 import "gridstack/dist/gridstack.min.css";
 
-import BoxLoading from "../../components/BoxLoading";
 import DialogConfirm from "../../components/DialogConfirm";
 import DrawerWidgetManager from "../../components/GridStack/DrawerWidgetManager";
 
@@ -246,24 +246,20 @@ export default function FarmGridStackOverview() {
     });
   };
 
-  const handleSaveWidgetConfig = () => {
-    setWidgets((prev) =>
-      prev.map((w) =>
-        w.id === edit.id
-          ? {
-              ...w,
-              title: edit.title,
-              type: edit.type,
-              bgcolor: edit.bgcolor,
-              unit: edit.unit,
-              max: edit.max,
-              min: edit.min,
-              ratio: edit.ratio,
-            }
-          : w
-      )
+  const handleSaveWidgetConfig = async () => {
+    const updated = widgets.map((w) =>
+      w.id === edit.id
+        ? { ...w, title: edit.title, type: edit.type, bgcolor: edit.bgcolor, unit: edit.unit, max: edit.max, min: edit.min, ratio: edit.ratio }
+        : w
     );
+    setWidgets(updated);
     setEdit((prev) => ({ ...prev, open: false }));
+    try {
+      await saveWidgetLayout(deviceId, updated);
+      enqueueSnackbar("บันทึกการตั้งค่าวิดเจ็ตเรียบร้อยแล้ว", { variant: "success" });
+    } catch {
+      enqueueSnackbar("บันทึกการตั้งค่าไม่สำเร็จ", { variant: "error" });
+    }
   };
 
   const handleCloseEdit = () =>
@@ -282,7 +278,7 @@ export default function FarmGridStackOverview() {
 
   const toggleLock = () => setLocked((prev) => !prev);
 
-  if (isLoading) return <BoxLoading />;
+  if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>;
 
   return (
     <MqttProvider topics={mqttTopics} deviceId={deviceId}>
@@ -390,6 +386,21 @@ export default function FarmGridStackOverview() {
                   helperText="จะแสดงคู่กับค่า Min/Max"
                   onChange={(e) =>
                     setEdit((prev) => ({ ...prev, unit: e.target.value }))
+                  }
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="ตัวคูณ (Ratio)"
+                  fullWidth
+                  size="small"
+                  type="number"
+                  value={edit.ratio}
+                  placeholder="เช่น 0.1, 2"
+                  helperText="คูณค่าดิบก่อนแสดง (ว่างคือ ×1)"
+                  onChange={(e) =>
+                    setEdit((prev) => ({ ...prev, ratio: e.target.value }))
                   }
                 />
               </Grid>

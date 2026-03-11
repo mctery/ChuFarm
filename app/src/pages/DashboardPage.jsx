@@ -107,7 +107,7 @@ function DeviceCard({ device, onClick }) {
             <Typography variant="body2" fontWeight={600} noWrap lineHeight={1.3}>{device.name}</Typography>
             <Typography variant="caption" color="text.secondary" noWrap lineHeight={1.2}>{device.device_id}</Typography>
           </Box>
-          <Chip label={online ? "ON" : "OFF"} size="small" color={online ? "success" : "default"}
+          <Chip label={online ? "เปิด" : "ปิด"} size="small" color={online ? "success" : "default"}
             variant="outlined" sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700 }} />
         </Stack>
       </CardContent>
@@ -218,7 +218,7 @@ export default function DashboardPage() {
               <Typography variant="subtitle2" fontWeight={700}>สถานะอุปกรณ์</Typography>
               <Stack direction="row" alignItems="center" spacing={1}>
                 {!loading && devices.length > 0 && (
-                  <Typography variant="caption" color="text.secondary">{onlinePct}% online</Typography>
+                  <Typography variant="caption" color="text.secondary">{onlinePct}% ออนไลน์</Typography>
                 )}
                 <Button size="small" endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
                   onClick={() => navigate(ROUTES.DEVICES)}

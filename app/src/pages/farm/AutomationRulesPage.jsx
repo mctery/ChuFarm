@@ -20,6 +20,7 @@ import {
   Divider,
   alpha,
   useTheme,
+  useMediaQuery,
   Collapse,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -36,6 +37,7 @@ import apiClient from "../../services/apiClient";
 import { SysGetDevices } from "../../services/device_service";
 import { SysGetDeviceSensorsById } from "../../services/sensor_service";
 import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import EmptyState from "../../components/EmptyState";
 import DialogConfirm from "../../components/DialogConfirm";
 import { OPERATORS, ACTION_TYPES } from "../../constants/automation";
 
@@ -60,6 +62,7 @@ const emptyAction = () => ({
 export default function AutomationRulesPage() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [loading, setLoading] = useState(true);
   const [rules, setRules] = useState([]);
@@ -285,31 +288,16 @@ export default function AutomationRulesPage() {
       </Stack>
 
       {rules.length === 0 ? (
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            border: "2px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
-        >
-          <SmartToyIcon sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            ยังไม่มีกฎอัตโนมัติ
-          </Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
-            สร้างกฎเพื่อให้ระบบทำงานอัตโนมัติเมื่อค่าเซ็นเซอร์ถึงเงื่อนไข
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={openCreate}
-            color="success"
-          >
-            สร้างกฎแรก
-          </Button>
-        </Paper>
+        <EmptyState
+          icon={SmartToyIcon}
+          title="ยังไม่มีกฎอัตโนมัติ"
+          description="สร้างกฎเพื่อให้ระบบทำงานอัตโนมัติเมื่อค่าเซ็นเซอร์ถึงเงื่อนไข"
+          action={
+            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={openCreate} color="success">
+              สร้างกฎแรก
+            </Button>
+          }
+        />
       ) : (
         <Stack spacing={1.5}>
           {rules.map((rule) => (
@@ -463,6 +451,7 @@ export default function AutomationRulesPage() {
         onClose={dialog.close}
         fullWidth
         maxWidth="md"
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
           {dialog.state.item ? "แก้ไขกฎ" : "สร้างกฎใหม่"}
@@ -495,7 +484,7 @@ export default function AutomationRulesPage() {
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  label="Cooldown (วินาที)"
+                  label="คูลดาวน์ (วินาที)"
                   type="number"
                   fullWidth
                   size="small"

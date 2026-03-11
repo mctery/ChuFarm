@@ -12,6 +12,8 @@ const {
   bulkRoleSchema,
   bulkDeleteUsersSchema,
   bulkDeleteDevicesSchema,
+  bulkDeleteSensorsSchema,
+  bulkDeleteNotificationsSchema,
   createAdminUserSchema,
   updateAdminUserSchema,
 } = require('../validations/adminValidation');
@@ -35,10 +37,13 @@ const {
   getAdminDeviceLogs,
   getAdminNotifications,
   createSystemNotification,
+  deleteAdminNotification,
   getSystemInfo,
   bulkUpdateRole,
   bulkDeleteUsers,
   bulkDeleteDevices,
+  bulkDeleteSensors,
+  bulkDeleteNotifications,
   createAdminUser,
   updateAdminUser,
   deleteAdminUser,
@@ -80,6 +85,9 @@ router.get('/devices', getAdminDevices);
 router.put('/devices/:id', validate(updateDeviceSchema), updateAdminDevice);
 router.delete('/devices/:id', deleteAdminDevice);
 
+// Sensors — bulk operations BEFORE :id routes
+router.delete('/sensors/bulk-delete', validate(bulkDeleteSensorsSchema), bulkDeleteSensors);
+
 // Sensors
 router.get('/sensors', getAdminSensors);
 router.put('/sensors/:id', validate(updateSensorSchema), updateAdminSensor);
@@ -88,9 +96,13 @@ router.delete('/sensors/:id', deleteAdminSensor);
 // Device logs
 router.get('/device-logs', getAdminDeviceLogs);
 
+// Notifications — bulk operations BEFORE :id routes
+router.delete('/notifications/bulk-delete', validate(bulkDeleteNotificationsSchema), bulkDeleteNotifications);
+
 // Notifications
 router.get('/notifications', getAdminNotifications);
 router.post('/notifications', validate(createNotificationSchema), createSystemNotification);
+router.delete('/notifications/:id', deleteAdminNotification);
 
 // Permissions & menus
 router.get('/permissions', getPermissionDefinitions);

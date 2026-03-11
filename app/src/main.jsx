@@ -37,6 +37,7 @@ const SchedulesPage = React.lazy(() => import("./pages/farm/SchedulesPage"));
 const FarmsPage = React.lazy(() => import("./pages/farm/FarmsPage"));
 const FarmDetailPage = React.lazy(() => import("./pages/farm/FarmDetailPage"));
 const AnalyticsPage = React.lazy(() => import("./pages/farm/AnalyticsPage"));
+const DeviceProfilesPage = React.lazy(() => import("./pages/farm/DeviceProfilesPage"));
 const PageNotFound = React.lazy(() => import("./pages/PageNotFound"));
 
 function SuspenseWrapper({ children }) {
@@ -137,6 +138,10 @@ const router = createBrowserRouter([
           {
             path: "farm_control_system/analytics",
             ...lazyElement(AnalyticsPage),
+          },
+          {
+            path: "farm_control_system/device-profiles",
+            ...lazyElement(DeviceProfilesPage),
           },
         ],
       },

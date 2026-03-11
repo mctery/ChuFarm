@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   Avatar,
   Box,
+  Button,
   ButtonBase,
   Card,
   Chip,
@@ -17,6 +18,11 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
+import "dayjs/locale/th";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
@@ -30,7 +36,9 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
 import { LineChart } from "@mui/x-charts/LineChart";
 
-import BoxLoading from "../../components/BoxLoading";
+import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import PageBreadcrumbs from "../../components/PageBreadcrumbs";
+import ExportDialog from "../../components/ExportDialog";
 import {
   SysGetDeviceSensorsById,
   SysGetSensorDataAggregate,
@@ -67,8 +75,10 @@ export default function SensorHistoryPage() {
   const [sensors, setSensors] = useState([]);
   const [selectedSensor, setSelectedSensor] = useState("");
   const [timeRange, setTimeRange] = useState(24);
+  const [customRange, setCustomRange] = useState({ start: null, end: null });
   const [chartData, setChartData] = useState([]);
   const [summary, setSummary] = useState({ avg: 0, min: 0, max: 0, count: 0 });
+  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -91,22 +101,34 @@ export default function SensorHistoryPage() {
   sensorRef.current = selectedSensor;
   rangeRef.current = timeRange;
 
-  const doFetch = useCallback(async (sensor, range) => {
+  const doFetch = useCallback(async (sensor, range, custom) => {
     if (!sensor) return;
     setChartLoading(true);
     const [sType, sId] = sensor.split("|");
-    const rangeConfig = TIME_RANGES.find((t) => t.value === range);
-    const now = new Date();
-    const startDate = new Date(now);
-    if (rangeConfig.unit === "hour") {
-      startDate.setHours(startDate.getHours() - rangeConfig.value);
+
+    let startISO, endISO, groupBy;
+    if (range === "custom" && custom?.start && custom?.end) {
+      startISO = custom.start.toISOString();
+      endISO = custom.end.toISOString();
+      const diffDays = custom.end.diff(custom.start, "day");
+      groupBy = diffDays >= 2 ? "day" : "hour";
     } else {
-      startDate.setDate(startDate.getDate() - rangeConfig.value);
+      const rangeConfig = TIME_RANGES.find((t) => t.value === range);
+      const now = new Date();
+      const startDate = new Date(now);
+      if (rangeConfig.unit === "hour") {
+        startDate.setHours(startDate.getHours() - rangeConfig.value);
+      } else {
+        startDate.setDate(startDate.getDate() - rangeConfig.value);
+      }
+      startISO = startDate.toISOString();
+      endISO = now.toISOString();
+      groupBy = range >= 7 ? "day" : "hour";
     }
-    const groupBy = range >= 7 ? "day" : "hour";
+
     const result = await SysGetSensorDataAggregate(
       deviceId, sType, sId,
-      startDate.toISOString(), now.toISOString(), groupBy
+      startISO, endISO, groupBy
     );
     if (Array.isArray(result) && result.length > 0) {
       setChartData(result);
@@ -131,12 +153,12 @@ export default function SensorHistoryPage() {
   }, [deviceId]);
 
   useEffect(() => {
-    if (selectedSensor) doFetch(selectedSensor, timeRange);
+    if (selectedSensor && timeRange !== "custom") doFetch(selectedSensor, timeRange);
   }, [selectedSensor, timeRange, doFetch]);
 
   const handleRefresh = useCallback(() => {
-    doFetch(sensorRef.current, rangeRef.current);
-  }, [doFetch]);
+    doFetch(sensorRef.current, rangeRef.current, rangeRef.current === "custom" ? customRange : undefined);
+  }, [doFetch, customRange]);
 
   const handleExportCSV = useCallback(() => {
     if (chartData.length === 0) return;
@@ -176,7 +198,7 @@ export default function SensorHistoryPage() {
   const colors = SENSOR_COLORS[sensorType] || DEFAULT_COLOR;
   const isDark = theme.palette.mode === "dark";
 
-  if (loading) return <BoxLoading />;
+  if (loading) return <SkeletonCardGrid count={4} height={200} />;
 
   const selectedSensorObj = sensors.find(
     (s) => `${s.sensor_type}|${s.sensor_id}` === selectedSensor
@@ -184,6 +206,7 @@ export default function SensorHistoryPage() {
 
   return (
     <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      <PageBreadcrumbs crumbs={[{ label: "อุปกรณ์", path: ROUTES.DEVICES }, { label: deviceName || deviceId }]} />
       {/* ── Header ── */}
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
         <IconButton
@@ -206,21 +229,18 @@ export default function SensorHistoryPage() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={0.5}>
-          <Tooltip title="ส่งออก CSV">
-            <span>
-              <IconButton
-                onClick={handleExportCSV}
-                disabled={chartLoading || chartData.length === 0}
-                size="small"
-                sx={{
-                  bgcolor: alpha(colors.main, 0.1),
-                  color: colors.main,
-                  "&:hover": { bgcolor: alpha(colors.main, 0.2) },
-                }}
-              >
-                <FileDownloadIcon fontSize="small" />
-              </IconButton>
-            </span>
+          <Tooltip title="ส่งออกข้อมูล">
+            <IconButton
+              onClick={() => setExportOpen(true)}
+              size="small"
+              sx={{
+                bgcolor: alpha(colors.main, 0.1),
+                color: colors.main,
+                "&:hover": { bgcolor: alpha(colors.main, 0.2) },
+              }}
+            >
+              <FileDownloadIcon fontSize="small" />
+            </IconButton>
           </Tooltip>
           <Tooltip title="รีเฟรชข้อมูล">
             <span>
@@ -310,9 +330,9 @@ export default function SensorHistoryPage() {
       </Stack>
 
       {/* ── Time Range Pills ── */}
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: timeRange === "custom" ? 1.5 : 2.5 }}>
         <AccessTimeIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-        <Stack direction="row" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} flexWrap="wrap">
           {TIME_RANGES.map((r) => {
             const isActive = timeRange === r.value;
             return (
@@ -328,17 +348,64 @@ export default function SensorHistoryPage() {
                   color: isActive ? "#fff" : "text.secondary",
                   bgcolor: isActive ? colors.main : "transparent",
                   transition: "all 0.2s ease",
-                  "&:hover": {
-                    bgcolor: isActive ? colors.main : alpha(colors.main, 0.1),
-                  },
+                  "&:hover": { bgcolor: isActive ? colors.main : alpha(colors.main, 0.1) },
                 }}
               >
                 {r.label}
               </ButtonBase>
             );
           })}
+          {/* Custom range pill */}
+          <ButtonBase
+            onClick={() => setTimeRange("custom")}
+            sx={{
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 5,
+              fontSize: "0.8rem",
+              fontWeight: timeRange === "custom" ? 700 : 500,
+              color: timeRange === "custom" ? "#fff" : "text.secondary",
+              bgcolor: timeRange === "custom" ? colors.main : "transparent",
+              transition: "all 0.2s ease",
+              "&:hover": { bgcolor: timeRange === "custom" ? colors.main : alpha(colors.main, 0.1) },
+            }}
+          >
+            กำหนดเอง
+          </ButtonBase>
         </Stack>
       </Stack>
+
+      {/* Custom date range inputs */}
+      {timeRange === "custom" && (
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="th">
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }} sx={{ mb: 2.5 }}>
+            <DateTimePicker
+              label="เริ่มต้น"
+              value={customRange.start}
+              onChange={(v) => setCustomRange((prev) => ({ ...prev, start: v }))}
+              maxDateTime={customRange.end ?? dayjs()}
+              slotProps={{ textField: { size: "small", sx: { minWidth: 200 } } }}
+            />
+            <DateTimePicker
+              label="สิ้นสุด"
+              value={customRange.end}
+              onChange={(v) => setCustomRange((prev) => ({ ...prev, end: v }))}
+              minDateTime={customRange.start}
+              maxDateTime={dayjs()}
+              slotProps={{ textField: { size: "small", sx: { minWidth: 200 } } }}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              disabled={!customRange.start || !customRange.end || chartLoading}
+              onClick={() => doFetch(selectedSensor, "custom", customRange)}
+              sx={{ height: 40, px: 3 }}
+            >
+              ดูข้อมูล
+            </Button>
+          </Stack>
+        </LocalizationProvider>
+      )}
 
       {/* ── Summary Cards ── */}
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
@@ -513,6 +580,13 @@ export default function SensorHistoryPage() {
           )}
         </Box>
       </Card>
+
+      <ExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        deviceId={deviceId}
+        deviceName={deviceName}
+      />
     </Box>
   );
 }

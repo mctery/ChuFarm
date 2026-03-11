@@ -39,8 +39,8 @@ const COLUMNS = [
   { id: "user_id", label: "ผู้ใช้" },
   { id: "action", label: "การกระทำ", align: "center" },
   { id: "resource_type", label: "ประเภท", align: "center" },
-  { id: "resource_id", label: "Resource ID" },
-  { id: "ip_address", label: "IP" },
+  { id: "resource_id", label: "รหัสทรัพยากร" },
+  { id: "ip_address", label: "ไอพี" },
   { id: "detail", label: "", align: "center", width: 50 },
 ];
 
@@ -49,8 +49,8 @@ const CSV_COLUMNS = [
   { key: "user_id", label: "ผู้ใช้" },
   { key: "action", label: "การกระทำ" },
   { key: "resource_type", label: "ประเภท" },
-  { key: "resource_id", label: "Resource ID" },
-  { key: "ip_address", label: "IP" },
+  { key: "resource_id", label: "รหัสทรัพยากร" },
+  { key: "ip_address", label: "ไอพี" },
 ];
 
 export default function AdminAuditLogsPage() {

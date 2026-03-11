@@ -6,12 +6,13 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import AppToolbarActions from "../components/AppToolbarActions";
 
 const ROUTE_TITLES = {
-  "/dashboard": "แดชบอร์ด",
+  "/dashboard": "",
   "/notifications": "การแจ้งเตือน",
   "/settings": "ตั้งค่า",
   "/about": "เกี่ยวกับ",
   "/help": "ช่วยเหลือ",
   "/farm_control_system/devices": "อุปกรณ์",
+  "/farm_control_system/device-profiles": "โปรไฟล์อุปกรณ์",
   "/farm_control_system/thresholds": "ค่าขีดจำกัด",
   "/farm_control_system/automation-rules": "กฎอัตโนมัติ",
   "/farm_control_system/schedules": "ตารางเวลา",
@@ -31,11 +32,9 @@ function usePageTitle() {
 }
 
 export default function Layout() {
-  const pageTitle = usePageTitle();
-
   return (
     <DashboardLayout slots={{ toolbarActions: AppToolbarActions }}>
-      <PageContainer title={pageTitle} sx={{ maxWidth: "100% !important" }}>
+      <PageContainer title="" sx={{ maxWidth: "100% !important" }}>
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>

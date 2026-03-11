@@ -143,7 +143,7 @@ const RegisterPage = () => {
   );
 
   return (
-    <AuthLayout maxWidth={440}>
+    <AuthLayout layout="split" maxWidth={440}>
       <Box
         sx={{
           display: "flex",

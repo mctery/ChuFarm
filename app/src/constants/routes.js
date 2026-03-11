@@ -9,6 +9,7 @@ export const ROUTES = {
   ABOUT: "/about",
   HELP: "/help",
   DEVICES: "/farm_control_system/devices",
+  DEVICE_PROFILES: "/farm_control_system/device-profiles",
   GRIDSTACK: (id) => `/farm_control_system/devices/gridstack/${id}`,
   HISTORY: (id) => `/farm_control_system/devices/history/${id}`,
   THRESHOLDS: "/farm_control_system/thresholds",

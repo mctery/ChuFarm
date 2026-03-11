@@ -36,6 +36,22 @@ export async function SysDeleteDevice(id) {
   return res.message === "OK";
 }
 
+export async function SysGetDeviceHealth(id) {
+  const res = await makeRequest(
+    (api) => api.get(`/api/devices/${id}/health`),
+    { fallback: null, label: "SysGetDeviceHealth" }
+  );
+  return res.data ?? null;
+}
+
+export async function SysGetDeviceLogs(deviceId, params = {}) {
+  const res = await makeRequest(
+    (api) => api.get(`/api/device-logs/${deviceId}`, { params }),
+    { fallback: null, label: "SysGetDeviceLogs" }
+  );
+  return res ?? null;
+}
+
 export async function SysSendDeviceCommand(id, command, payload = {}) {
   const res = await makeRequest(
     (api) => api.post(`/api/devices/${id}/commands`, { command, payload }),

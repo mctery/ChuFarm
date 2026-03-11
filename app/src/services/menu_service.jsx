@@ -12,11 +12,19 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import AgricultureIcon from "@mui/icons-material/Agriculture";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import TuneIcon from "@mui/icons-material/Tune";
+import PolicyIcon from "@mui/icons-material/Policy";
+import DeviceHubIcon from "@mui/icons-material/DeviceHub";
+import RuleIcon from "@mui/icons-material/Rule";
+import MapIcon from "@mui/icons-material/Map";
 
 import { getUserInfo } from "./storage_service";
 
 /** Map icon name (from DB) → MUI icon component */
-const ICON_MAP = {
+export const ICON_MAP = {
   Home: <HomeIcon />,
   Dashboard: <DashboardIcon />,
   Devices: <DevicesIcon />,
@@ -31,6 +39,14 @@ const ICON_MAP = {
   Notifications: <NotificationsIcon />,
   MenuBook: <MenuBookIcon />,
   BarChart: <BarChartIcon />,
+  Agriculture: <AgricultureIcon />,
+  Schedule: <ScheduleIcon />,
+  Timeline: <TimelineIcon />,
+  Tune: <TuneIcon />,
+  Policy: <PolicyIcon />,
+  DeviceHub: <DeviceHubIcon />,
+  Rule: <RuleIcon />,
+  Map: <MapIcon />,
 };
 
 const ADMIN_KEY = "admin";

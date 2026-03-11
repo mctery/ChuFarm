@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDialogState } from "../../hooks/useDialogState";
 import {
   TableRow,
   TableCell,
@@ -14,14 +15,20 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  IconButton,
+  Tooltip,
+  Checkbox,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
 import AdminPageWrapper from "../../components/admin/AdminPageWrapper";
 import AdminDataTable from "../../components/admin/AdminDataTable";
 import AdminSearchBar from "../../components/admin/AdminSearchBar";
 import AdminFilterBar from "../../components/admin/AdminFilterBar";
 import ExportButton from "../../components/admin/ExportButton";
+import DialogConfirm from "../../components/DialogConfirm";
 import apiClient from "../../services/apiClient";
 import { formatDate } from "../../utils/dateFormat";
 
@@ -30,19 +37,21 @@ const SEVERITIES = ["info", "warning", "critical"];
 
 const SEVERITY_COLORS = { info: "info", warning: "warning", critical: "error" };
 const TYPE_LABELS = {
-  threshold_alert: "Threshold",
-  device_offline: "Offline",
-  device_online: "Online",
-  system: "System",
+  threshold_alert: "เกณฑ์แจ้งเตือน",
+  device_offline: "อุปกรณ์ออฟไลน์",
+  device_online: "อุปกรณ์ออนไลน์",
+  system: "ระบบ",
 };
 
 const COLUMNS = [
+  { id: "select", label: "", width: 40 },
   { id: "createdAt", label: "วันที่" },
   { id: "user_name", label: "ผู้ใช้" },
   { id: "title", label: "หัวข้อ" },
   { id: "type", label: "ประเภท", align: "center" },
   { id: "severity", label: "ความรุนแรง", align: "center" },
   { id: "is_read", label: "อ่านแล้ว", align: "center" },
+  { id: "actions", label: "", align: "center", width: 60 },
 ];
 
 const CSV_COLUMNS = [
@@ -64,6 +73,10 @@ export default function AdminNotificationsPage() {
   const [severityFilter, setSeverityFilter] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [selected, setSelected] = useState([]);
+  const deleteDialog = useDialogState();
+  const bulkDeleteDialog = useDialogState();
+
   const [createDialog, setCreateDialog] = useState(false);
   const [createForm, setCreateForm] = useState({ title: "", message: "", severity: "info" });
   const [creating, setCreating] = useState(false);
@@ -78,6 +91,7 @@ export default function AdminNotificationsPage() {
       const { data } = await apiClient.get("/api/admin/notifications", { params });
       setNotifications(data.data);
       setPagination((prev) => ({ ...prev, total: data.pagination.total }));
+      setSelected([]);
     } catch {
       enqueueSnackbar("โหลดข้อมูลแจ้งเตือนไม่สำเร็จ", { variant: "error" });
     } finally {
@@ -91,6 +105,31 @@ export default function AdminNotificationsPage() {
     setSearch(val);
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
+
+  const handleDelete = async () => {
+    try {
+      await apiClient.delete(`/api/admin/notifications/${deleteDialog.state.item}`);
+      enqueueSnackbar("ลบแจ้งเตือนสำเร็จ", { variant: "success" });
+      deleteDialog.close();
+      fetchNotifications();
+    } catch {
+      enqueueSnackbar("ลบแจ้งเตือนไม่สำเร็จ", { variant: "error" });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await apiClient.delete("/api/admin/notifications/bulk-delete", { data: { ids: selected } });
+      enqueueSnackbar(`ลบ ${selected.length} แจ้งเตือนสำเร็จ`, { variant: "success" });
+      bulkDeleteDialog.close();
+      fetchNotifications();
+    } catch {
+      enqueueSnackbar("ลบแจ้งเตือนไม่สำเร็จ", { variant: "error" });
+    }
+  };
+
+  const toggleSelect = (id) =>
+    setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -143,6 +182,19 @@ export default function AdminNotificationsPage() {
             },
           ]}
         />
+        {selected.length > 0 && (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body2" color="text.secondary">เลือก {selected.length} รายการ</Typography>
+            <Chip
+              label="ลบที่เลือก"
+              color="error"
+              size="small"
+              onClick={bulkDeleteDialog.open}
+              onDelete={bulkDeleteDialog.open}
+              deleteIcon={<DeleteIcon />}
+            />
+          </Stack>
+        )}
       </Stack>
 
       <AdminDataTable
@@ -153,31 +205,62 @@ export default function AdminNotificationsPage() {
         onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
         onRowsPerPageChange={(l) => setPagination((prev) => ({ ...prev, limit: l, page: 1 }))}
         emptyText="ไม่พบแจ้งเตือน"
-        renderRow={(n) => (
-          <TableRow key={n._id} hover>
-            <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(n.createdAt)}</TableCell>
-            <TableCell>{n.user_name}</TableCell>
-            <TableCell>{n.title}</TableCell>
-            <TableCell align="center">
-              <Chip label={TYPE_LABELS[n.type] || n.type} variant="outlined" size="small" />
-            </TableCell>
-            <TableCell align="center">
-              <Chip
-                label={n.severity}
-                color={SEVERITY_COLORS[n.severity] || "default"}
-                size="small"
-              />
-            </TableCell>
-            <TableCell align="center">
-              <Chip
-                label={n.is_read ? "อ่านแล้ว" : "ยังไม่อ่าน"}
-                color={n.is_read ? "default" : "warning"}
-                size="small"
-                variant={n.is_read ? "outlined" : "filled"}
-              />
-            </TableCell>
-          </TableRow>
-        )}
+        renderRow={(n) => {
+          const isSelected = selected.includes(n._id);
+          return (
+            <TableRow key={n._id} hover selected={isSelected} onClick={() => toggleSelect(n._id)} sx={{ cursor: "pointer" }}>
+              <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                <Checkbox size="small" checked={isSelected} onChange={() => toggleSelect(n._id)} />
+              </TableCell>
+              <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(n.createdAt)}</TableCell>
+              <TableCell>{n.user_name}</TableCell>
+              <TableCell>{n.title}</TableCell>
+              <TableCell align="center">
+                <Chip label={TYPE_LABELS[n.type] || n.type} variant="outlined" size="small" />
+              </TableCell>
+              <TableCell align="center">
+                <Chip label={n.severity} color={SEVERITY_COLORS[n.severity] || "default"} size="small" />
+              </TableCell>
+              <TableCell align="center">
+                <Chip
+                  label={n.is_read ? "อ่านแล้ว" : "ยังไม่อ่าน"}
+                  color={n.is_read ? "default" : "warning"}
+                  size="small"
+                  variant={n.is_read ? "outlined" : "filled"}
+                />
+              </TableCell>
+              <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                <Tooltip title="ลบ">
+                  <IconButton size="small" color="error" onClick={() => deleteDialog.open(n._id)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          );
+        }}
+      />
+
+      {/* Delete Confirm */}
+      <DialogConfirm
+        open={deleteDialog.state.open}
+        handleClose={deleteDialog.close}
+        handleConfirm={handleDelete}
+        title="ลบแจ้งเตือน"
+        content="ยืนยันลบแจ้งเตือนนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบ"
+        confirmColor="error"
+      />
+
+      {/* Bulk Delete Confirm */}
+      <DialogConfirm
+        open={bulkDeleteDialog.state.open}
+        handleClose={bulkDeleteDialog.close}
+        handleConfirm={handleBulkDelete}
+        title="ลบแจ้งเตือนที่เลือก"
+        content={`ยืนยันลบ ${selected.length} แจ้งเตือน? การดำเนินการนี้ไม่สามารถย้อนกลับได้`}
+        confirmText="ลบทั้งหมด"
+        confirmColor="error"
       />
 
       {/* Create Notification Dialog */}

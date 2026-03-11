@@ -22,7 +22,8 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { useSnackbar } from "notistack";
 import apiClient from "../services/apiClient";
 import { getUserInfo } from "../services/storage_service";
-import BoxLoading from "../components/BoxLoading";
+import EmptyState from "../components/EmptyState";
+import { Skeleton } from "@mui/material";
 import { formatDate } from "../utils/dateFormat";
 
 const SEVERITY_COLORS = {
@@ -180,7 +181,6 @@ export default function NotificationsPage() {
                   label={unreadCount}
                   size="small"
                   color="error"
-                  sx={{ height: 20, fontSize: "0.7rem" }}
                 />
               )}
             </Stack>
@@ -191,30 +191,17 @@ export default function NotificationsPage() {
 
       {/* Content */}
       {loading ? (
-        <BoxLoading />
+        <Stack spacing={1}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={80} />
+          ))}
+        </Stack>
       ) : notifications.length === 0 ? (
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            bgcolor: "background.default",
-            border: "2px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
-        >
-          <NotificationsNoneIcon
-            sx={{ fontSize: 64, color: "text.disabled", mb: 2 }}
-          />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            ไม่มีแจ้งเตือน
-          </Typography>
-          <Typography variant="body2" color="text.disabled">
-            {tab === 1
-              ? "ไม่มีแจ้งเตือนที่ยังไม่ได้อ่าน"
-              : "ยังไม่มีแจ้งเตือนในระบบ"}
-          </Typography>
-        </Paper>
+        <EmptyState
+          icon={NotificationsNoneIcon}
+          title="ไม่มีแจ้งเตือน"
+          description={tab === 1 ? "ไม่มีแจ้งเตือนที่ยังไม่ได้อ่าน" : "ยังไม่มีแจ้งเตือนในระบบ"}
+        />
       ) : (
         <Stack spacing={1}>
           {notifications.map((n) => (
@@ -273,7 +260,6 @@ export default function NotificationsPage() {
                     label={SEVERITY_LABELS[n.severity] || n.severity || "info"}
                     size="small"
                     color={SEVERITY_COLORS[n.severity] || "default"}
-                    sx={{ height: 22, fontSize: "0.7rem" }}
                   />
                 </Stack>
                 <Typography

@@ -20,7 +20,7 @@ const EVENTS = ["online", "offline", "command_sent", "command_ack"];
 const COLUMNS = [
   { id: "createdAt", label: "วันที่" },
   { id: "device_name", label: "อุปกรณ์" },
-  { id: "device_id", label: "Device ID" },
+  { id: "device_id", label: "รหัสอุปกรณ์" },
   { id: "event", label: "เหตุการณ์", align: "center" },
   { id: "metadata", label: "ข้อมูลเพิ่มเติม" },
 ];
@@ -28,7 +28,7 @@ const COLUMNS = [
 const CSV_COLUMNS = [
   { key: "createdAt", label: "วันที่" },
   { key: "device_name", label: "อุปกรณ์" },
-  { key: "device_id", label: "Device ID" },
+  { key: "device_id", label: "รหัสอุปกรณ์" },
   { key: "event", label: "เหตุการณ์" },
 ];
 

@@ -3,15 +3,18 @@ import {
   Box,
   Button,
   Grid,
-  Typography,
   Stack,
-  Paper,
   Pagination,
   TextField,
   InputAdornment,
   ToggleButtonGroup,
   ToggleButton,
   Chip,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { Outlet } from "react-router-dom";
@@ -20,6 +23,7 @@ import DevicesIcon from "@mui/icons-material/Devices";
 import SearchIcon from "@mui/icons-material/Search";
 import WifiIcon from "@mui/icons-material/Wifi";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
+import SortIcon from "@mui/icons-material/Sort";
 import {
   SysGetDevicesPaginated,
   SysCreateDevice,
@@ -29,12 +33,23 @@ import {
 import { getUserInfo } from "../../services/storage_service";
 import DeviceWidget from "../../components/DeviceWidget";
 import DeviceFormDialog from "../../components/DeviceFormDialog";
-import BoxLoading from "../../components/BoxLoading";
+import DeviceHealthDrawer from "../../components/DeviceHealthDrawer";
 import DialogConfirm from "../../components/DialogConfirm";
+import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import EmptyState from "../../components/EmptyState";
+import ErrorStateCard from "../../components/ErrorStateCard";
 
 import { animated as Animated, useSprings } from "@react-spring/web";
 import { SocketConnect, SocketRefreshRooms } from "../../services/socket_service";
 import { PAGINATION } from "../../services/global_variable";
+
+const SORT_OPTIONS = [
+  { value: "default", label: "ค่าเริ่มต้น" },
+  { value: "name_asc", label: "ชื่อ A→Z" },
+  { value: "name_desc", label: "ชื่อ Z→A" },
+  { value: "online_first", label: "ออนไลน์ก่อน" },
+  { value: "last_seen_desc", label: "เชื่อมต่อล่าสุด" },
+];
 
 export default function FarmControlDevices() {
   const [devices, setDevices] = useState([]);
@@ -44,22 +59,30 @@ export default function FarmControlDevices() {
   const [editOpen, setEditOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [healthDevice, setHealthDevice] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalDevices, setTotalDevices] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("default");
+  const [error, setError] = useState(false);
 
   const CURRENT_USER_ID = getUserInfo()?.user_id;
 
   const fetchDevices = async (targetPage = page) => {
     await SocketConnect();
     setLoading(true);
-    const { devices: data, pagination } = await SysGetDevicesPaginated(targetPage, PAGINATION.DEVICES_PER_PAGE);
-    setDevices(Array.isArray(data) ? data : []);
-    if (pagination) {
-      setTotalPages(pagination.totalPages);
-      setTotalDevices(pagination.total);
+    setError(false);
+    try {
+      const { devices: data, pagination } = await SysGetDevicesPaginated(targetPage, PAGINATION.DEVICES_PER_PAGE);
+      setDevices(Array.isArray(data) ? data : []);
+      if (pagination) {
+        setTotalPages(pagination.totalPages);
+        setTotalDevices(pagination.total);
+      }
+    } catch {
+      setError(true);
     }
     setLoading(false);
   };
@@ -83,9 +106,27 @@ export default function FarmControlDevices() {
     return result;
   }, [devices, search, statusFilter]);
 
+  const sortedDevices = useMemo(() => {
+    if (sortBy === "default") return filteredDevices;
+    const arr = [...filteredDevices];
+    if (sortBy === "name_asc")
+      return arr.sort((a, b) => (a.name || "").localeCompare(b.name || "", "th"));
+    if (sortBy === "name_desc")
+      return arr.sort((a, b) => (b.name || "").localeCompare(a.name || "", "th"));
+    if (sortBy === "online_first")
+      return arr.sort((a, b) => (b.online_status ? 1 : 0) - (a.online_status ? 1 : 0));
+    if (sortBy === "last_seen_desc")
+      return arr.sort((a, b) => {
+        if (!a.last_seen) return 1;
+        if (!b.last_seen) return -1;
+        return new Date(b.last_seen) - new Date(a.last_seen);
+      });
+    return arr;
+  }, [filteredDevices, sortBy]);
+
   const springs = useSprings(
-    filteredDevices.length,
-    filteredDevices.map((_, i) => ({
+    sortedDevices.length,
+    sortedDevices.map((_, i) => ({
       from: { opacity: 0, transform: "translateY(16px)" },
       to: { opacity: 1, transform: "translateY(0)" },
       delay: i * 60,
@@ -172,114 +213,112 @@ export default function FarmControlDevices() {
         </Button>
       </Stack>
 
-      {/* Search + Filter */}
-      {devices.length > 0 && (
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
-          alignItems={{ sm: "center" }}
-          sx={{ mb: 2.5 }}
+      {/* Search + Filter + Sort */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1.5}
+        alignItems={{ sm: "center" }}
+        flexWrap="wrap"
+        sx={{ mb: 2.5 }}
+      >
+        <TextField
+          size="small"
+          placeholder="ค้นหาอุปกรณ์..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 220 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 20, color: "text.secondary" }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <ToggleButtonGroup
+          value={statusFilter}
+          exclusive
+          size="small"
+          onChange={(_, val) => val !== null && setStatusFilter(val)}
+          sx={{
+            "& .MuiToggleButton-root": {
+              px: 1.5,
+              borderRadius: "8px !important",
+              mx: 0.25,
+              border: "none",
+              "&.Mui-selected": { fontWeight: 700 },
+            },
+          }}
         >
-          <TextField
-            size="small"
-            placeholder="ค้นหาอุปกรณ์..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            sx={{ minWidth: 240 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 20, color: "text.secondary" }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <ToggleButtonGroup
-            value={statusFilter}
-            exclusive
-            size="small"
-            onChange={(_, val) => val !== null && setStatusFilter(val)}
-            sx={{
-              "& .MuiToggleButton-root": {
-                px: 1.5,
-                borderRadius: "8px !important",
-                mx: 0.25,
-                border: "none",
-                "&.Mui-selected": { fontWeight: 700 },
-              },
-            }}
+          <ToggleButton value="all">
+            ทั้งหมด
+            <Chip label={devices.length} size="small" sx={{ ml: 0.5 }} />
+          </ToggleButton>
+          <ToggleButton value="online">
+            <WifiIcon sx={{ fontSize: 16, mr: 0.5, color: "success.main" }} />
+            ออนไลน์
+            <Chip label={onlineCount} size="small" color="success" sx={{ ml: 0.5 }} />
+          </ToggleButton>
+          <ToggleButton value="offline">
+            <WifiOffIcon sx={{ fontSize: 16, mr: 0.5, color: "text.secondary" }} />
+            ออฟไลน์
+            <Chip label={offlineCount} size="small" sx={{ ml: 0.5 }} />
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+              <SortIcon sx={{ fontSize: 16 }} />
+              <span>เรียงลำดับ</span>
+            </Stack>
+          </InputLabel>
+          <Select
+            value={sortBy}
+            label="เรียงลำดับ"
+            onChange={(e) => setSortBy(e.target.value)}
           >
-            <ToggleButton value="all">
-              ทั้งหมด
-              <Chip label={devices.length} size="small" sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }} />
-            </ToggleButton>
-            <ToggleButton value="online">
-              <WifiIcon sx={{ fontSize: 16, mr: 0.5, color: "success.main" }} />
-              ออนไลน์
-              <Chip label={onlineCount} size="small" color="success" sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }} />
-            </ToggleButton>
-            <ToggleButton value="offline">
-              <WifiOffIcon sx={{ fontSize: 16, mr: 0.5, color: "text.secondary" }} />
-              ออฟไลน์
-              <Chip label={offlineCount} size="small" sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }} />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-      )}
+            {SORT_OPTIONS.map((o) => (
+              <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
 
       {/* Content */}
       {loading ? (
-        <BoxLoading />
+        <SkeletonCardGrid count={8} height={160} />
+      ) : error ? (
+        <ErrorStateCard message="โหลดข้อมูลอุปกรณ์ไม่สำเร็จ" onRetry={() => fetchDevices(page)} />
       ) : devices.length === 0 ? (
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            bgcolor: "background.default",
-            border: "2px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
-        >
-          <DevicesIcon sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            ยังไม่มีอุปกรณ์ในระบบ
-          </Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-            เริ่มต้นด้วยการเพิ่มอุปกรณ์ IoT เครื่องแรกของคุณ
-          </Typography>
-          <Button variant="contained" startIcon={<AddCircleIcon />} onClick={openAddDialog}>
-            เพิ่มอุปกรณ์เครื่องแรก
-          </Button>
-        </Paper>
-      ) : filteredDevices.length === 0 ? (
-        <Paper
-          sx={{
-            p: 4,
-            textAlign: "center",
-            bgcolor: "background.default",
-            border: "1px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
-        >
-          <SearchIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
-          <Typography variant="body1" color="text.secondary">
-            ไม่พบอุปกรณ์ที่ตรงกับการค้นหา
-          </Typography>
-        </Paper>
+        <EmptyState
+          icon={DevicesIcon}
+          title="ยังไม่มีอุปกรณ์ในระบบ"
+          description="เริ่มต้นด้วยการเพิ่มอุปกรณ์ IoT เครื่องแรกของคุณ"
+          action={
+            <Button variant="contained" startIcon={<AddCircleIcon />} onClick={openAddDialog}>
+              เพิ่มอุปกรณ์เครื่องแรก
+            </Button>
+          }
+        />
+      ) : sortedDevices.length === 0 ? (
+        <EmptyState
+          variant="search"
+          title="ไม่พบอุปกรณ์ที่ตรงกับการค้นหา"
+        />
       ) : (
         <>
           <Grid container spacing={2}>
             {springs.map((style, i) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={filteredDevices[i]._id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={sortedDevices[i]._id}>
                 <Animated.div style={style}>
                   <DeviceWidget
-                    device={filteredDevices[i]}
+                    device={sortedDevices[i]}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onHealthClick={setHealthDevice}
                   />
                 </Animated.div>
               </Grid>
@@ -321,6 +360,12 @@ export default function FarmControlDevices() {
         initialData={currentDevice || {}}
         variant="drawer"
         currentUserId={CURRENT_USER_ID}
+      />
+
+      <DeviceHealthDrawer
+        open={!!healthDevice}
+        device={healthDevice}
+        onClose={() => setHealthDevice(null)}
       />
 
       <Outlet />

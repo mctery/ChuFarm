@@ -15,11 +15,11 @@ const Menu = require('../models/menuModel');
 const UserMenu = require('../models/userMenuModel');
 
 const MENU_SEED = [
-  { key: 'dashboard', name: 'Dashboard', path: '/dashboard', icon: 'Home', order: 1, parent_key: null },
-  { key: 'devices', name: 'Devices', path: '/farm_control_system/devices', icon: 'Devices', order: 2, parent_key: null },
-  { key: 'about', name: 'About', path: '/about', icon: 'Info', order: 3, parent_key: null },
-  { key: 'help', name: 'Help', path: '/help', icon: 'Help', order: 4, parent_key: null },
-  { key: 'admin', name: 'Admin', path: '/admin', icon: 'AdminPanelSettings', order: 100, parent_key: null },
+  { key: 'dashboard', name: 'หน้าหลัก', path: '/dashboard', icon: 'Home', order: 1, parent_key: null },
+  { key: 'devices', name: 'อุปกรณ์', path: '/farm_control_system/devices', icon: 'Devices', order: 2, parent_key: null },
+  { key: 'about', name: 'เกี่ยวกับ', path: '/about', icon: 'Info', order: 3, parent_key: null },
+  { key: 'help', name: 'ช่วยเหลือ', path: '/help', icon: 'Help', order: 4, parent_key: null },
+  { key: 'admin', name: 'ผู้ดูแลระบบ', path: '/admin', icon: 'AdminPanelSettings', order: 100, parent_key: null },
   { key: 'admin_dashboard', name: 'ภาพรวม', path: '/admin/dashboard', icon: 'BarChart', order: 1, parent_key: 'admin' },
   { key: 'admin_users', name: 'จัดการผู้ใช้', path: '/admin/users', icon: 'People', order: 2, parent_key: 'admin' },
   { key: 'admin_devices', name: 'จัดการอุปกรณ์', path: '/admin/devices', icon: 'Devices', order: 3, parent_key: 'admin' },

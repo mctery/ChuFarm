@@ -41,6 +41,10 @@ const userSchema = mongoose.Schema(
         resetTokenExpiry: {
             type: Date,
             default: null
+        },
+        avatar: {
+            type: String,
+            default: null
         }
     },
     {

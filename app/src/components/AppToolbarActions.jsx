@@ -240,7 +240,7 @@ export default function AppToolbarActions({ inAdmin = false }) {
           <Typography variant="subtitle2" fontWeight={700}>{userInfo?.first_name} {userInfo?.last_name}</Typography>
           <Typography variant="caption" color="text.secondary">{userInfo?.email}</Typography>
           <Box sx={{ mt: 0.5 }}>
-            <Chip label={userInfo?.role === "admin" ? "Admin" : "User"} size="small" color={userInfo?.role === "admin" ? "primary" : "default"} sx={{ height: 20, fontSize: "0.7rem" }} />
+            <Chip label={userInfo?.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"} size="small" color={userInfo?.role === "admin" ? "primary" : "default"} />
           </Box>
         </Box>
         <Divider />
@@ -249,7 +249,7 @@ export default function AppToolbarActions({ inAdmin = false }) {
         {isAdmin && !inAdmin && (
           <MenuItem onClick={() => { setProfileAnchor(null); navigate(ROUTES.ADMIN_DASHBOARD); }}>
             <ListItemIcon><AdminPanelSettingsIcon fontSize="small" color="primary" /></ListItemIcon>
-            <ListItemText>Admin Panel</ListItemText>
+            <ListItemText>แผงผู้ดูแลระบบ</ListItemText>
           </MenuItem>
         )}
 

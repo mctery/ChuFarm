@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { isAdmin } from "../services/permission_service";
+import { ICON_MAP } from "../services/menu_service";
 import {
   Box,
   Drawer,
@@ -37,12 +38,13 @@ import AgricultureIcon from "@mui/icons-material/Agriculture";
 import AppToolbarActions from "../components/AppToolbarActions";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { ROUTES } from "../constants/routes";
+import apiClient from "../services/apiClient";
 
 const DRAWER_WIDTH = 260;
 const MINI_WIDTH = 64;
 const TRANSITION = "width 0.2s ease, min-width 0.2s ease";
 
-const NAV_ITEMS = [
+const STATIC_NAV_ITEMS = [
   { path: ROUTES.ADMIN_DASHBOARD, label: "ภาพรวมระบบ", icon: <DashboardIcon fontSize="small" /> },
   { divider: true },
   { path: ROUTES.ADMIN_USERS, label: "ผู้ใช้งาน", icon: <PeopleIcon fontSize="small" /> },
@@ -50,24 +52,33 @@ const NAV_ITEMS = [
   { path: ROUTES.ADMIN_SENSORS, label: "เซ็นเซอร์", icon: <SensorsIcon fontSize="small" /> },
   { path: ROUTES.ADMIN_NOTIFICATIONS, label: "การแจ้งเตือน", icon: <NotificationsIcon fontSize="small" /> },
   { divider: true },
-  { path: ROUTES.ADMIN_AUDIT_LOGS, label: "Audit Logs", icon: <AssignmentIcon fontSize="small" /> },
-  { path: ROUTES.ADMIN_DEVICE_LOGS, label: "Device Logs", icon: <ListAltIcon fontSize="small" /> },
+  { path: ROUTES.ADMIN_AUDIT_LOGS, label: "บันทึกกิจกรรม", icon: <AssignmentIcon fontSize="small" /> },
+  { path: ROUTES.ADMIN_DEVICE_LOGS, label: "บันทึกอุปกรณ์", icon: <ListAltIcon fontSize="small" /> },
   { divider: true },
   { path: ROUTES.ADMIN_MENUS, label: "จัดการเมนู", icon: <MenuBookIcon fontSize="small" /> },
   { path: ROUTES.ADMIN_SETTINGS, label: "ตั้งค่าระบบ", icon: <SettingsIcon fontSize="small" /> },
 ];
 
+function buildNavFromMenus(menus) {
+  const adminMenus = menus.filter((m) => m.path?.startsWith("/admin/") && m.status === "A");
+  if (adminMenus.length === 0) return null;
+  return adminMenus.map((m) => {
+    const iconEl = ICON_MAP[m.icon];
+    return {
+      path: m.path,
+      label: m.name,
+      icon: iconEl
+        ? <iconEl.type {...iconEl.props} fontSize="small" />
+        : <DashboardIcon fontSize="small" />,
+    };
+  });
+}
+
 function AdminToolbarActions() {
   return <AppToolbarActions inAdmin={true} />;
 }
 
-function usePageTitle() {
-  const location = useLocation();
-  const item = NAV_ITEMS.find((n) => !n.divider && n.path === location.pathname);
-  return item?.label || "Admin Panel";
-}
-
-function DrawerContent({ collapsed = false, onClose, onToggleCollapse }) {
+function DrawerContent({ collapsed = false, onClose, onToggleCollapse, navItems }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -129,7 +140,7 @@ function DrawerContent({ collapsed = false, onClose, onToggleCollapse }) {
 
       {/* Nav Items */}
       <List sx={{ flex: 1, py: 1, overflowY: "auto", overflowX: "hidden" }}>
-        {NAV_ITEMS.map((item, idx) => {
+        {navItems.map((item, idx) => {
           if (item.divider) return <Divider key={`d-${idx}`} sx={{ my: 0.5 }} />;
 
           const active = location.pathname === item.path;
@@ -211,14 +222,30 @@ export default function AdminLayout() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const pageTitle = usePageTitle();
+  const [navItems, setNavItems] = useState(STATIC_NAV_ITEMS);
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Dynamic menu loading from DB
+  useEffect(() => {
+    apiClient.get("/api/admin/menus")
+      .then(({ data }) => {
+        const built = buildNavFromMenus(data.data || []);
+        if (built) setNavItems(built);
+      })
+      .catch(() => { /* fallback to STATIC_NAV_ITEMS */ });
+  }, []);
+
+  // Admin guard
   useEffect(() => {
     if (!isAdmin()) {
       navigate("/dashboard", { replace: true });
     }
   }, [navigate]);
+
+  const pageTitle = navItems
+    .filter((n) => !n.divider)
+    .find((n) => n.path === location.pathname)?.label || "แผงควบคุม";
 
   const drawerWidth = collapsed ? MINI_WIDTH : DRAWER_WIDTH;
 
@@ -271,7 +298,7 @@ export default function AdminLayout() {
             "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box" },
           }}
         >
-          <DrawerContent onClose={() => setMobileOpen(false)} />
+          <DrawerContent navItems={navItems} onClose={() => setMobileOpen(false)} />
         </Drawer>
 
         {/* Desktop permanent */}
@@ -289,7 +316,7 @@ export default function AdminLayout() {
           }}
           open
         >
-          <DrawerContent collapsed={collapsed} onToggleCollapse={() => setCollapsed((p) => !p)} />
+          <DrawerContent navItems={navItems} collapsed={collapsed} onToggleCollapse={() => setCollapsed((p) => !p)} />
         </Drawer>
       </Box>
 

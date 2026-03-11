@@ -189,6 +189,11 @@ export const STATUS = {
   DELETED: "D",
 };
 
+export const HEALTH_THRESHOLDS = {
+  BATTERY_LOW: 20,   // % — แสดง warning เมื่อต่ำกว่านี้
+  SIGNAL_WEAK: -80,  // dBm — แสดง warning เมื่อต่ำกว่านี้
+};
+
 export const MQTT_TOPIC = [
   `device/+/temperature`,
   `device/+/humidity`,

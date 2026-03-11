@@ -242,12 +242,15 @@ const getAdminDevices = asyncHandler(async (req, res) => {
 const updateAdminDevice = asyncHandler(async (req, res) => {
   logger.debug('updateAdminDevice called');
   const { id } = req.params;
-  const { name, version } = req.body;
+  const updateData = { ...req.body };
+  if (updateData.status !== undefined) {
+    updateData.status = updateData.status === true || updateData.status === 'A' ? STATUS.ACTIVE : STATUS.DELETED;
+  }
 
   const device = await Device.findOneAndUpdate(
     { _id: id, status: STATUS.ACTIVE },
-    { ...(name && { name }), ...(version && { version }) },
-    { new: true }
+    updateData,
+    { new: true, runValidators: true }
   );
   if (!device) {
     res.status(404);
@@ -533,13 +536,13 @@ const bulkDeleteUsers = asyncHandler(async (req, res) => {
 
 const bulkDeleteDevices = asyncHandler(async (req, res) => {
   logger.debug('bulkDeleteDevices called');
-  const { device_ids } = req.body;
+  const { ids } = req.body;
 
-  const devices = await Device.find({ _id: { $in: device_ids }, status: STATUS.ACTIVE }).lean();
+  const devices = await Device.find({ _id: { $in: ids }, status: STATUS.ACTIVE }).lean();
   const deviceIdStrings = devices.map((d) => d.device_id);
 
   const result = await Device.updateMany(
-    { _id: { $in: device_ids }, status: STATUS.ACTIVE },
+    { _id: { $in: ids }, status: STATUS.ACTIVE },
     { status: STATUS.DELETED }
   );
 
@@ -550,6 +553,46 @@ const bulkDeleteDevices = asyncHandler(async (req, res) => {
       { status: STATUS.DELETED }
     );
   }
+
+  res.json({ message: 'OK', data: { deleted: result.modifiedCount } });
+});
+
+const bulkDeleteSensors = asyncHandler(async (req, res) => {
+  logger.debug('bulkDeleteSensors called');
+  const { ids } = req.body;
+
+  const result = await Sensor.updateMany(
+    { _id: { $in: ids }, status: STATUS.ACTIVE },
+    { status: STATUS.DELETED }
+  );
+
+  res.json({ message: 'OK', data: { deleted: result.modifiedCount } });
+});
+
+const deleteAdminNotification = asyncHandler(async (req, res) => {
+  logger.debug('deleteAdminNotification called');
+  const { id } = req.params;
+
+  const notification = await Notification.findOneAndUpdate(
+    { _id: id, status: STATUS.ACTIVE },
+    { status: STATUS.DELETED },
+    { new: true }
+  );
+  if (!notification) {
+    res.status(404);
+    throw new Error(`Notification not found: ${id}`);
+  }
+  res.json({ message: 'OK', data: { deleted: notification._id } });
+});
+
+const bulkDeleteNotifications = asyncHandler(async (req, res) => {
+  logger.debug('bulkDeleteNotifications called');
+  const { ids } = req.body;
+
+  const result = await Notification.updateMany(
+    { _id: { $in: ids }, status: STATUS.ACTIVE },
+    { status: STATUS.DELETED }
+  );
 
   res.json({ message: 'OK', data: { deleted: result.modifiedCount } });
 });
@@ -661,6 +704,9 @@ module.exports = {
   bulkUpdateRole,
   bulkDeleteUsers,
   bulkDeleteDevices,
+  bulkDeleteSensors,
+  deleteAdminNotification,
+  bulkDeleteNotifications,
   // User CRUD
   createAdminUser,
   updateAdminUser,

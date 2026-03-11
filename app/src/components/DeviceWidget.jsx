@@ -21,13 +21,16 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import CircleIcon from "@mui/icons-material/Circle";
 import DevicesIcon from "@mui/icons-material/Devices";
 import TerminalIcon from "@mui/icons-material/Terminal";
+import BatteryAlertIcon from "@mui/icons-material/BatteryAlert";
+import SignalWifiOffIcon from "@mui/icons-material/SignalWifiOff";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import DeviceCommandDialog from "./DeviceCommandDialog";
 
 import { SocketSubscribe } from "../services/socket_service";
-import { SIGNAL_ICON, RSSI_THRESHOLD } from "../services/global_variable";
+import { SIGNAL_ICON, RSSI_THRESHOLD, HEALTH_THRESHOLDS } from "../services/global_variable";
 
-export default function DeviceWidget({ device, onEdit, onDelete }) {
+export default function DeviceWidget({ device, onEdit, onDelete, onHealthClick }) {
   const [realtime, setRealtime] = useState(null);
   const [signal, setSignal] = useState(SIGNAL_ICON.OFFLINE);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -70,6 +73,13 @@ export default function DeviceWidget({ device, onEdit, onDelete }) {
   }, [realtime?.addr?.rssi]);
 
   const isOnline = !!realtime;
+
+  const batteryLow =
+    typeof device.battery_level === "number" &&
+    device.battery_level < HEALTH_THRESHOLDS.BATTERY_LOW;
+  const signalWeak =
+    typeof device.signal_strength === "number" &&
+    device.signal_strength < HEALTH_THRESHOLDS.SIGNAL_WEAK;
 
   return (
     <Card
@@ -124,7 +134,7 @@ export default function DeviceWidget({ device, onEdit, onDelete }) {
                 }}
               />
             }
-            label={isOnline ? "ON" : "OFF"}
+            label={isOnline ? "เปิด" : "ปิด"}
             size="small"
             variant="outlined"
             color={isOnline ? "success" : "default"}
@@ -132,6 +142,30 @@ export default function DeviceWidget({ device, onEdit, onDelete }) {
           />
         </Stack>
       </Box>
+
+      {/* Health Alert Chips */}
+      {(batteryLow || signalWeak) && (
+        <Stack direction="row" spacing={0.5} sx={{ px: 2, pt: 1 }}>
+          {batteryLow && (
+            <Chip
+              icon={<BatteryAlertIcon sx={{ fontSize: "13px !important" }} />}
+              label={`แบต ${device.battery_level}%`}
+              size="small"
+              color="error"
+              variant="outlined"
+            />
+          )}
+          {signalWeak && (
+            <Chip
+              icon={<SignalWifiOffIcon sx={{ fontSize: "13px !important" }} />}
+              label={`สัญญาณอ่อน`}
+              size="small"
+              color="warning"
+              variant="outlined"
+            />
+          )}
+        </Stack>
+      )}
 
       {/* Actions */}
       <CardContent sx={{ p: 1.5, pt: 1, pb: "8px !important", mt: "auto" }}>
@@ -157,6 +191,15 @@ export default function DeviceWidget({ device, onEdit, onDelete }) {
                 onClick={() => navigate(`history/${device.device_id}`)}
               >
                 <TimelineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="ข้อมูลอุปกรณ์">
+              <IconButton
+                size="small"
+                color="default"
+                onClick={() => onHealthClick?.(device)}
+              >
+                <InfoOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="ตั้งค่า">

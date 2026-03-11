@@ -20,6 +20,7 @@ import {
   Divider,
   alpha,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -31,6 +32,7 @@ import { useSnackbar } from "notistack";
 import apiClient from "../../services/apiClient";
 import { SysGetDevices } from "../../services/device_service";
 import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import EmptyState from "../../components/EmptyState";
 import DialogConfirm from "../../components/DialogConfirm";
 import { ACTION_TYPES, CRON_PRESETS, DEFAULT_TIMEZONE } from "../../constants/automation";
 import { formatDate } from "../../utils/dateFormat";
@@ -46,6 +48,7 @@ const emptyAction = () => ({
 export default function SchedulesPage() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [loading, setLoading] = useState(true);
   const [schedules, setSchedules] = useState([]);
@@ -241,31 +244,16 @@ export default function SchedulesPage() {
       </Stack>
 
       {schedules.length === 0 ? (
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            border: "2px dashed",
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
-        >
-          <ScheduleIcon sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            ยังไม่มี Schedule
-          </Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
-            สร้าง schedule เพื่อตั้งเวลาส่งคำสั่งหรือแจ้งเตือนอัตโนมัติ
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={openCreate}
-            color="success"
-          >
-            สร้าง Schedule แรก
-          </Button>
-        </Paper>
+        <EmptyState
+          icon={ScheduleIcon}
+          title="ยังไม่มี Schedule"
+          description="สร้าง schedule เพื่อตั้งเวลาส่งคำสั่งหรือแจ้งเตือนอัตโนมัติ"
+          action={
+            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={openCreate} color="success">
+              สร้าง Schedule แรก
+            </Button>
+          }
+        />
       ) : (
         <Stack spacing={1.5}>
           {schedules.map((s) => (
@@ -346,6 +334,7 @@ export default function SchedulesPage() {
         onClose={dialog.close}
         fullWidth
         maxWidth="sm"
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
           {dialog.state.item ? "แก้ไข Schedule" : "สร้าง Schedule"}
@@ -403,7 +392,7 @@ export default function SchedulesPage() {
 
             {form.cron_preset === "" && (
               <TextField
-                label="Cron Expression"
+                label="Cron Expression (นิพจน์)"
                 fullWidth
                 size="small"
                 value={form.cron_expression}

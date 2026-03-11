@@ -31,6 +31,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import SecurityIcon from "@mui/icons-material/Security";
+import MenuIcon from "@mui/icons-material/Menu";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -49,7 +50,7 @@ const USER_CSV_COLUMNS = [
   { key: "first_name", label: "ชื่อ" },
   { key: "last_name", label: "นามสกุล" },
   { key: "email", label: "อีเมล" },
-  { key: "role", label: "Role" },
+  { key: "role", label: "บทบาท" },
   { key: "status", label: "สถานะ" },
 ];
 
@@ -81,6 +82,12 @@ export default function AdminUsersPage() {
   const [permGroups, setPermGroups] = useState([]);
   const [userPermissions, setUserPermissions] = useState([]);
   const [savingPerms, setSavingPerms] = useState(false);
+
+  // Menu dialog state
+  const [menuDialog, setMenuDialog] = useState({ open: false, user: null });
+  const [allMenus, setAllMenus] = useState([]);
+  const [userMenuIds, setUserMenuIds] = useState([]);
+  const [savingMenus, setSavingMenus] = useState(false);
 
   // Create dialog state
   const createDialog = useDialogState();
@@ -346,6 +353,41 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Menu dialog handlers
+  const openMenuDialog = async (user) => {
+    try {
+      const [menusRes, userMenusRes] = await Promise.all([
+        apiClient.get("/api/admin/menus"),
+        apiClient.get(`/api/admin/users/${user._id}/menus`),
+      ]);
+      setAllMenus(menusRes.data.data || []);
+      setUserMenuIds(userMenusRes.data.data.menu_ids || []);
+      setMenuDialog({ open: true, user });
+    } catch {
+      enqueueSnackbar("โหลดข้อมูลเมนูไม่สำเร็จ", { variant: "error" });
+    }
+  };
+
+  const handleMenuToggle = (menuId) => {
+    setUserMenuIds((prev) =>
+      prev.includes(menuId) ? prev.filter((id) => id !== menuId) : [...prev, menuId]
+    );
+  };
+
+  const saveMenus = async () => {
+    if (!menuDialog.user) return;
+    setSavingMenus(true);
+    try {
+      await apiClient.put(`/api/admin/users/${menuDialog.user._id}/menus`, { menu_ids: userMenuIds });
+      enqueueSnackbar("บันทึกเมนูสำเร็จ", { variant: "success" });
+      setMenuDialog({ open: false, user: null });
+    } catch {
+      enqueueSnackbar("บันทึกเมนูไม่สำเร็จ", { variant: "error" });
+    } finally {
+      setSavingMenus(false);
+    }
+  };
+
   // Delete dialog handlers
   const openDeleteDialog = (user) => deleteDialog.open(user);
   const closeDeleteDialog = deleteDialog.close;
@@ -400,6 +442,7 @@ export default function AdminUsersPage() {
               <TableCell align="center">Role</TableCell>
               <TableCell align="center">สถานะ</TableCell>
               <TableCell align="center">สิทธิ์</TableCell>
+              <TableCell align="center">เมนู</TableCell>
               <TableCell align="center">การดำเนินการ</TableCell>
             </TableRow>
           </TableHead>
@@ -430,13 +473,13 @@ export default function AdminUsersPage() {
                     onChange={(e) => handleRoleChange(user._id, e.target.value)}
                     sx={{ minWidth: 100 }}
                   >
-                    <MenuItem value="admin">Admin</MenuItem>
-                    <MenuItem value="user">User</MenuItem>
+                    <MenuItem value="admin">ผู้ดูแลระบบ</MenuItem>
+                    <MenuItem value="user">ผู้ใช้งาน</MenuItem>
                   </Select>
                 </TableCell>
                 <TableCell align="center">
                   <Chip
-                    label={user.status === "A" ? "Active" : "Inactive"}
+                    label={user.status === "A" ? "ใช้งาน" : "ปิดใช้"}
                     color={user.status === "A" ? "success" : "default"}
                     size="small"
                   />
@@ -449,6 +492,16 @@ export default function AdminUsersPage() {
                     title="แก้ไขสิทธิ์"
                   >
                     <SecurityIcon />
+                  </IconButton>
+                </TableCell>
+                <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                  <IconButton
+                    size="small"
+                    color="secondary"
+                    onClick={() => openMenuDialog(user)}
+                    title="จัดการเมนู"
+                  >
+                    <MenuIcon />
                   </IconButton>
                 </TableCell>
                 <TableCell align="center" onClick={(e) => e.stopPropagation()}>
@@ -473,7 +526,7 @@ export default function AdminUsersPage() {
             ))}
             {!loading && users.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={8} align="center">
                   ไม่พบผู้ใช้
                 </TableCell>
               </TableRow>
@@ -659,16 +712,16 @@ export default function AdminUsersPage() {
               }}
             />
             <FormControl size="small" fullWidth>
-              <InputLabel>Role</InputLabel>
+              <InputLabel>บทบาท</InputLabel>
               <Select
-                label="Role"
+                label="บทบาท"
                 value={createForm.role}
                 onChange={(e) =>
                   setCreateForm((prev) => ({ ...prev, role: e.target.value }))
                 }
               >
-                <MenuItem value="user">User</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="user">ผู้ใช้งาน</MenuItem>
+                <MenuItem value="admin">ผู้ดูแลระบบ</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -802,6 +855,50 @@ export default function AdminUsersPage() {
             startIcon={deleteLoading ? <CircularProgress size={16} /> : null}
           >
             ลบผู้ใช้
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Menu Assignment Dialog */}
+      <Dialog open={menuDialog.open} onClose={() => setMenuDialog({ open: false, user: null })} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <MenuIcon color="secondary" />
+            จัดการเมนู — {menuDialog.user?.first_name} {menuDialog.user?.last_name}
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          {allMenus.length === 0 ? (
+            <Typography color="text.secondary">ไม่มีเมนูในระบบ</Typography>
+          ) : (
+            <FormGroup>
+              {allMenus.map((menu) => (
+                <FormControlLabel
+                  key={menu._id}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={userMenuIds.includes(menu._id)}
+                      onChange={() => handleMenuToggle(menu._id)}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2">{menu.title}</Typography>
+                      {menu.path && (
+                        <Typography variant="caption" color="text.secondary">{menu.path}</Typography>
+                      )}
+                    </Box>
+                  }
+                />
+              ))}
+            </FormGroup>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMenuDialog({ open: false, user: null })}>ยกเลิก</Button>
+          <Button variant="contained" onClick={saveMenus} disabled={savingMenus}>
+            {savingMenus ? "กำลังบันทึก..." : "บันทึก"}
           </Button>
         </DialogActions>
       </Dialog>

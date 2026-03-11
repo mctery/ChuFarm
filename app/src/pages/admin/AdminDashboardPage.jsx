@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Stack,
@@ -11,11 +11,14 @@ import {
   TableHead,
   TableRow,
   Chip,
+  useTheme,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import DevicesIcon from "@mui/icons-material/DevicesOther";
 import SensorsIcon from "@mui/icons-material/Sensors";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import { PieChart } from "@mui/x-charts/PieChart";
+import { BarChart } from "@mui/x-charts/BarChart";
 import { useSnackbar } from "notistack";
 import AdminPageWrapper from "../../components/admin/AdminPageWrapper";
 import StatCard from "../../components/admin/StatCard";
@@ -38,8 +41,40 @@ const SEVERITY_COLORS = {
 
 export default function AdminDashboardPage() {
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Chart data derived from stats
+  const devicePieData = useMemo(() => {
+    if (!stats) return [];
+    const online = stats.onlineDevices ?? 0;
+    const offline = (stats.devices ?? 0) - online;
+    return [
+      { id: 0, value: online, label: "ออนไลน์", color: theme.palette.success.main },
+      { id: 1, value: Math.max(0, offline), label: "ออฟไลน์", color: theme.palette.grey[400] },
+    ];
+  }, [stats, theme]);
+
+  const severityBarData = useMemo(() => {
+    if (!stats?.recentNotifications) return { labels: [], values: [] };
+    const counts = { info: 0, warning: 0, critical: 0 };
+    stats.recentNotifications.forEach((n) => { if (n.severity in counts) counts[n.severity]++; });
+    return { labels: ["info", "warning", "critical"], values: [counts.info, counts.warning, counts.critical] };
+  }, [stats]);
+
+  const auditPieData = useMemo(() => {
+    if (!stats?.recentAuditLogs) return [];
+    const counts = {};
+    stats.recentAuditLogs.forEach((l) => { counts[l.action] = (counts[l.action] || 0) + 1; });
+    const colors = [
+      theme.palette.success.main, theme.palette.info.main, theme.palette.error.main,
+      theme.palette.primary.main, theme.palette.warning.main, theme.palette.grey[500],
+    ];
+    return Object.entries(counts).map(([action, value], idx) => ({
+      id: idx, value, label: action, color: colors[idx % colors.length],
+    }));
+  }, [stats, theme]);
 
   useEffect(() => {
     (async () => {
@@ -87,6 +122,64 @@ export default function AdminDashboardPage() {
           loading={loading}
         />
       </Stack>
+
+      {/* Charts Row */}
+      {!loading && stats && (
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 3 }}>
+          {/* Device Online/Offline Pie */}
+          <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>สถานะอุปกรณ์</Typography>
+            {devicePieData.some((d) => d.value > 0) ? (
+              <PieChart
+                series={[{ data: devicePieData, innerRadius: 40, outerRadius: 70, paddingAngle: 2, cornerRadius: 3 }]}
+                height={160}
+                slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" }, padding: 0 } }}
+              />
+            ) : (
+              <Box sx={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography variant="caption" color="text.disabled">ไม่มีข้อมูลอุปกรณ์</Typography>
+              </Box>
+            )}
+          </Paper>
+
+          {/* Notifications by Severity Bar */}
+          <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>แจ้งเตือนแยกตามระดับ</Typography>
+            {severityBarData.values.some((v) => v > 0) ? (
+              <BarChart
+                xAxis={[{ scaleType: "band", data: severityBarData.labels }]}
+                series={[{
+                  data: severityBarData.values,
+                  color: theme.palette.primary.main,
+                }]}
+                height={160}
+                margin={{ top: 10, bottom: 30, left: 30, right: 10 }}
+                sx={{ "& .MuiChartsAxis-tickLabel": { fontSize: "0.7rem" } }}
+              />
+            ) : (
+              <Box sx={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography variant="caption" color="text.disabled">ไม่มีข้อมูลแจ้งเตือน</Typography>
+              </Box>
+            )}
+          </Paper>
+
+          {/* Audit Action Breakdown Pie */}
+          <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>กิจกรรมแยกตามประเภท</Typography>
+            {auditPieData.length > 0 ? (
+              <PieChart
+                series={[{ data: auditPieData, innerRadius: 40, outerRadius: 70, paddingAngle: 2, cornerRadius: 3 }]}
+                height={160}
+                slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" }, padding: 0 } }}
+              />
+            ) : (
+              <Box sx={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography variant="caption" color="text.disabled">ไม่มีข้อมูลกิจกรรม</Typography>
+              </Box>
+            )}
+          </Paper>
+        </Stack>
+      )}
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Recent Audit Logs */}

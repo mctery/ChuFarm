@@ -20,6 +20,8 @@ import {
   Divider,
   Paper,
   Avatar,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -31,6 +33,9 @@ import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
 
 import SkeletonCardGrid from "../../components/SkeletonCardGrid";
+import EmptyState from "../../components/EmptyState";
+import ErrorStateCard from "../../components/ErrorStateCard";
+import PageBreadcrumbs from "../../components/PageBreadcrumbs";
 import DialogConfirm from "../../components/DialogConfirm";
 import { ROUTES } from "../../constants/routes";
 import {
@@ -62,8 +67,11 @@ export default function FarmDetailPage() {
   const { farmId } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [farm, setFarm] = useState(null);
   const [stats, setStats] = useState(null);
   const [zones, setZones] = useState([]);
@@ -77,14 +85,19 @@ export default function FarmDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   const fetchAll = useCallback(async () => {
-    const [farmData, statsData, zonesData] = await Promise.all([
-      SysGetFarmById(farmId),
-      SysGetFarmStats(farmId),
-      SysGetZonesByFarm(farmId),
-    ]);
-    setFarm(farmData);
-    setStats(statsData);
-    setZones(zonesData);
+    setError(false);
+    try {
+      const [farmData, statsData, zonesData] = await Promise.all([
+        SysGetFarmById(farmId),
+        SysGetFarmStats(farmId),
+        SysGetZonesByFarm(farmId),
+      ]);
+      setFarm(farmData);
+      setStats(statsData);
+      setZones(zonesData);
+    } catch {
+      setError(true);
+    }
   }, [farmId]);
 
   useEffect(() => {
@@ -170,19 +183,23 @@ export default function FarmDetailPage() {
 
   if (loading) return <SkeletonCardGrid count={6} height={120} />;
 
-  if (!farm) {
+  if (error || !farm) {
     return (
-      <Box sx={{ p: 3, textAlign: "center" }}>
-        <Typography color="text.secondary">ไม่พบข้อมูลฟาร์ม</Typography>
-        <Button sx={{ mt: 2 }} onClick={() => navigate(ROUTES.FARMS)}>
-          กลับไปรายการฟาร์ม
-        </Button>
+      <Box sx={{ p: 3 }}>
+        <ErrorStateCard
+          message={error ? "โหลดข้อมูลฟาร์มไม่สำเร็จ" : "ไม่พบข้อมูลฟาร์ม"}
+          onRetry={error ? fetchAll : undefined}
+        />
+        <Box sx={{ mt: 2, textAlign: "center" }}>
+          <Button onClick={() => navigate(ROUTES.FARMS)}>กลับไปรายการฟาร์ม</Button>
+        </Box>
       </Box>
     );
   }
 
   return (
     <Box sx={{ p: 3 }}>
+      <PageBreadcrumbs crumbs={[{ label: "ฟาร์มของฉัน", path: ROUTES.FARMS }, { label: farm.name }]} />
       {/* Back + Header */}
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <Tooltip title="กลับไปรายการฟาร์ม">
@@ -258,10 +275,17 @@ export default function FarmDetailPage() {
       <Divider sx={{ mb: 2 }} />
 
       {zones.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 6 }}>
-          <LayersIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
-          <Typography color="text.secondary">ยังไม่มีโซน กดเพิ่มโซนเพื่อเริ่มต้น</Typography>
-        </Box>
+        <EmptyState
+          icon={LayersIcon}
+          title="ยังไม่มีโซน"
+          description="กดเพิ่มโซนเพื่อแบ่งพื้นที่ในฟาร์ม"
+          variant="search"
+          action={
+            <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={openCreateZone}>
+              เพิ่มโซนแรก
+            </Button>
+          }
+        />
       ) : (
         <Grid container spacing={2}>
           {zones.map((zone) => (
@@ -323,6 +347,7 @@ export default function FarmDetailPage() {
         onClose={dialog.close}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>{dialog.state.item ? "แก้ไขโซน" : "เพิ่มโซนใหม่"}</DialogTitle>
         <DialogContent dividers>

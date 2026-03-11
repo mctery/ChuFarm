@@ -85,6 +85,7 @@ Login → POST /api/users/login → JWT access (12h) + refresh (7d)
 - **Error handling:** API throws → global error middleware; App catches → snackbar
 - **MUI v7:** `slotProps.input` (not InputProps), `DialogContent dividers`, Grid `size=` prop
 - **Async:** API uses `express-async-handler`; App uses `useCallback` + `useEffect`
+- **Bulk operations:** body key `ids` (array of ObjectIds) for all bulk-delete endpoints (except users: `user_ids`)
 
 ## Environment Variables
 
@@ -116,11 +117,17 @@ System: Notification, DeviceLog (TTL 30d), AuditLog (TTL 365d), Permission, Menu
 
 | Pattern | Direction | Purpose |
 |---------|-----------|---------|
-| `device/+/temperature` | Device → Server | Sensor readings |
-| `device/+/humidity` | Device → Server | Sensor readings |
-| `device/+/light` | Device → Server | Sensor readings |
-| `device/+/soil` | Device → Server | Sensor readings |
+| `device/+/{any_sensor_type}` | Device → Server | Sensor readings (dynamic — temperature, humidity, etc.) |
 | `device/+/checkin` | Device → Server | Heartbeat (online) |
 | `device/+/will` | Device → Server | LWT (offline) |
-| `device/+/health` | Device → Server | Battery, RSSI, firmware |
+| `device/+/health` | Device → Server | Battery, RSSI, firmware, uptime |
 | `request/{id}/{cmd}` | Server → Device | Commands |
+
+## Socket.IO Events
+
+| Event | Direction | Payload |
+|-------|-----------|---------|
+| `{sensor_type}` (e.g. `temperature`) | Server → Client | `{ device_id, v: { sensorId: value } }` |
+| `device_status` | Server → Client | `{ device_id, online_status, last_seen }` |
+| `device_health` | Server → Client | `{ device_id, battery_level, signal_strength, ... }` |
+| `refresh-rooms` | Client → Server | (re-join device rooms after device CRUD) |

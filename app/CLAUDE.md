@@ -47,7 +47,7 @@ cd app && fly deploy --ha=false
 
 ```
 src/
-├── main.jsx                   # Entry: router + lazy imports (25 pages)
+├── main.jsx                   # Entry: router + lazy imports (30 pages)
 ├── App.jsx                    # Root: theme provider, navigation, context
 ├── theme.js                   # MUI theme (light/dark, Thai fonts, green primary)
 ├── layouts/
@@ -56,7 +56,8 @@ src/
 │   ├── auth/                  # login, register, forgot-password, reset-password
 │   ├── farm/                  # FarmControlDevices, FarmGridStackOverview,
 │   │                          # SensorHistoryPage, ThresholdsPage,
-│   │                          # AutomationRulesPage, SchedulesPage
+│   │                          # AutomationRulesPage, SchedulesPage,
+│   │                          # FarmsPage, FarmDetailPage, AnalyticsPage
 │   ├── admin/                 # 9 admin pages (all use AdminPageWrapper)
 │   ├── DashboardPage.jsx      # Main dashboard (stats, weather, notifications)
 │   ├── NotificationsPage.jsx  # Notification center
@@ -72,20 +73,24 @@ src/
 │   ├── BoxLoading.jsx         # Spinner/loading component
 │   ├── DeviceWidget.jsx       # Device card (compact layout with action bar)
 │   ├── DeviceFormDialog.jsx   # Device CRUD dialog
+│   ├── DeviceCommandDialog.jsx # Send MQTT command via dialog
 │   ├── DialogConfirm.jsx      # Confirmation modal
 │   ├── ListButtonMenu.jsx     # List button menu component
+│   ├── SkeletonCardGrid.jsx   # Skeleton loading for card-grid pages (count, height props)
 │   └── ErrorBoundary.jsx      # Error boundary
 ├── services/
 │   ├── apiClient.js           # Axios: base URL, token, refresh, retry
 │   ├── auth_service.js        # Login, register, password reset
 │   ├── storage_service.js     # localStorage: tokens, user info
-│   ├── device_service.js      # Device CRUD
+│   ├── device_service.js      # Device CRUD + SysSendDeviceCommand
 │   ├── sensor_service.js      # Sensor data + aggregation
+│   ├── farm_service.js        # Farms + Zones CRUD
+│   ├── analytics_service.js   # summary, trend, compare, recommendations
 │   ├── socket_service.jsx     # Socket.IO connection + subscriptions
 │   ├── menu_service.jsx       # Dynamic nav menus from DB
 │   ├── permission_service.js  # RBAC: isAdmin, hasPermission
 │   ├── widget_service.js      # GridStack layout persistence
-│   └── global_variable.jsx    # Constants: sensor types, device status, etc.
+│   └── global_variable.jsx    # Constants: SEVERITY_COLORS, APP_CONFIG, STATUS, etc.
 ├── constants/
 │   └── routes.js              # Route path constants
 └── utils/
@@ -182,13 +187,15 @@ export default function ExamplePage() {
 - Wrapped in `AdminPageWrapper` (permission gated, shows error if not admin)
 - Reusable `AdminDataTable` with pagination
 - Search + filter bar, bulk actions, CSV export
+- `useDialogState(initialState)` hook for dialog open/close + item tracking
+- `DialogConfirm` props: `handleClose`, `handleConfirm`, `content` (not onClose/onConfirm/message)
 
 ### MUI v7 Conventions
 - Use `slotProps.input` instead of deprecated `InputProps`
 - Use `<DialogContent dividers>` instead of `sx={{ pt: "16px !important" }}`
 - Grid uses `size={{ xs: 12, sm: 6 }}` prop (not `item xs={12} sm={6}`)
 
-## Routes (25 pages)
+## Routes (30 pages)
 
 ### Auth (no layout)
 | Path | Component |
@@ -210,6 +217,9 @@ export default function ExamplePage() {
 | `/farm_control_system/thresholds` | ThresholdsPage |
 | `/farm_control_system/automation-rules` | AutomationRulesPage |
 | `/farm_control_system/schedules` | SchedulesPage |
+| `/farm_control_system/farms` | FarmsPage |
+| `/farm_control_system/farms/:farmId` | FarmDetailPage |
+| `/farm_control_system/analytics` | AnalyticsPage |
 
 ### Admin (DashboardLayout + AdminPageWrapper)
 | Path | Component |
@@ -254,6 +264,25 @@ export default function ExamplePage() {
 | `SysDeleteSensor(id)` | DELETE | `/api/sensors/{id}` |
 | `SysGetSensorDataAggregate(...)` | POST | `/api/sensorsdata/aggregate` |
 | `SysGetLatestSensorData(deviceId)` | GET | `/api/sensorsdata/latest/{id}` |
+
+### farm_service.js
+| Function | Method | Endpoint |
+|----------|--------|----------|
+| `SysGetFarms()` | GET | `/api/farms` |
+| `SysCreateFarm(payload)` | POST | `/api/farms` |
+| `SysUpdateFarm(id, payload)` | PUT | `/api/farms/{id}` |
+| `SysDeleteFarm(id)` | DELETE | `/api/farms/{id}` |
+| `SysGetFarmZones(farmId)` | GET | `/api/farms/{farmId}/zones` |
+| `SysCreateZone(farmId, payload)` | POST | `/api/farms/{farmId}/zones` |
+| `SysUpdateZone(id, payload)` | PUT | `/api/zones/{id}` |
+| `SysDeleteZone(id)` | DELETE | `/api/zones/{id}` |
+
+### GridStack Widget Notes
+- **Sensor `bgcolor`:** hex color for widget card background (editable in AdminSensorsPage + widget edit dialog)
+- **Widget `ratio`:** multiplier applied to raw sensor value before display (empty = ×1)
+- **Auto-save:** Widget config/layout changes auto-save to DB via `saveWidgetLayout()` — no separate save button needed
+- **Widget edit dialog** (`FarmGridStackOverview`): fields — sensor_name, unit, min, max, bgcolor (color picker), ratio (number)
+- **Real-time:** `MqttProvider` inside GridStack connects Socket.IO, joins device room, feeds data to `useSensorValue()` hooks
 
 ## Theme
 

@@ -215,7 +215,7 @@ export default function DrawerWidgetManager({
         <DialogContent>
           {config.showSensorName && (
             <TextField
-              label="Sensor Name"
+              label="ชื่อเซ็นเซอร์"
               size="small"
               fullWidth
               margin="normal"
@@ -224,7 +224,7 @@ export default function DrawerWidgetManager({
             />
           )}
           <TextField
-            label="Sensor Type"
+            label="ประเภทเซ็นเซอร์"
             size="small"
             fullWidth
             margin="normal"
@@ -232,7 +232,7 @@ export default function DrawerWidgetManager({
             onChange={(e) => setFormData((prev) => ({ ...prev, sensor_type: e.target.value }))}
           />
           <TextField
-            label="Sensor ID"
+            label="รหัสเซ็นเซอร์"
             size="small"
             fullWidth
             margin="normal"
@@ -249,7 +249,7 @@ export default function DrawerWidgetManager({
           />
           {config.showColorPicker && (
             <TextField
-              label="Color Code"
+              label="รหัสสี"
               type="color"
               size="small"
               fullWidth

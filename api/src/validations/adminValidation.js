@@ -26,8 +26,15 @@ const createNotificationSchema = Joi.object({
 });
 
 const updateDeviceSchema = Joi.object({
-  name: Joi.string().min(1).max(100),
+  name: Joi.string().min(1).max(200),
   version: Joi.string().max(20),
+  image: Joi.string().allow(''),
+  status: Joi.alternatives().try(Joi.boolean(), Joi.string().valid('A', 'D')),
+  farm_id: Joi.string().allow('', null),
+  zone_id: Joi.string().allow('', null),
+  profile_id: Joi.string().allow('', null),
+  firmware_version: Joi.string().trim().max(50).allow('', null),
+  hardware_version: Joi.string().trim().max(50).allow('', null),
 }).min(1);
 
 const updateSensorSchema = Joi.object({
@@ -51,7 +58,15 @@ const bulkDeleteUsersSchema = Joi.object({
 });
 
 const bulkDeleteDevicesSchema = Joi.object({
-  device_ids: Joi.array().items(objectId).min(1).required(),
+  ids: Joi.array().items(objectId).min(1).required(),
+});
+
+const bulkDeleteSensorsSchema = Joi.object({
+  ids: Joi.array().items(objectId).min(1).required(),
+});
+
+const bulkDeleteNotificationsSchema = Joi.object({
+  ids: Joi.array().items(objectId).min(1).required(),
 });
 
 const createAdminUserSchema = Joi.object({
@@ -79,6 +94,8 @@ module.exports = {
   bulkRoleSchema,
   bulkDeleteUsersSchema,
   bulkDeleteDevicesSchema,
+  bulkDeleteSensorsSchema,
+  bulkDeleteNotificationsSchema,
   createAdminUserSchema,
   updateAdminUserSchema,
 };

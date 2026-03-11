@@ -90,7 +90,7 @@ export default function DeviceCommandDialog({ open, device, onClose }) {
             autoFocus
           />
           <TextField
-            label="Payload (JSON, ไม่บังคับ)"
+            label="ข้อมูล Payload (JSON, ไม่บังคับ)"
             name="payload"
             value={form.payload}
             onChange={handleChange}

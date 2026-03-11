@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import imageCompression from "browser-image-compression";
 import {
   Box,
   Typography,
@@ -16,6 +17,8 @@ import {
   IconButton,
   InputAdornment,
   Alert,
+  Avatar,
+  Tooltip,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -24,6 +27,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import TelegramIcon from "@mui/icons-material/Telegram";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
 import apiClient from "../services/apiClient";
 import { getUserInfo } from "../services/storage_service";
@@ -36,11 +41,13 @@ export default function SettingsPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const avatarInputRef = useRef(null);
 
   // Profile
   const [profile, setProfile] = useState({
     first_name: "",
     last_name: "",
+    avatar: null,
   });
 
   // Password
@@ -72,7 +79,7 @@ export default function SettingsPage() {
         apiClient.get(`/api/settings/${userId}`),
       ]);
       const p = profileRes.data.data;
-      setProfile({ first_name: p.first_name || "", last_name: p.last_name || "" });
+      setProfile({ first_name: p.first_name || "", last_name: p.last_name || "", avatar: p.avatar || null });
 
       const s = settingsRes.data.data;
       setSettings({
@@ -90,6 +97,20 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 720, useWebWorker: true });
+      const reader = new FileReader();
+      reader.onloadend = () => setProfile((p) => ({ ...p, avatar: reader.result }));
+      reader.readAsDataURL(compressed);
+    } catch {
+      enqueueSnackbar("ไม่สามารถโหลดรูปภาพได้", { variant: "error" });
+    }
+    e.target.value = "";
+  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -186,6 +207,50 @@ export default function SettingsPage() {
                 ข้อมูลโปรไฟล์
               </Typography>
             </Stack>
+            {/* Avatar */}
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+              <Box sx={{ position: "relative" }}>
+                <Avatar
+                  src={profile.avatar || undefined}
+                  sx={{ width: 72, height: 72, fontSize: 24, fontWeight: 700, bgcolor: "primary.main" }}
+                >
+                  {!profile.avatar && ((profile.first_name?.[0] || "") + (profile.last_name?.[0] || "") || <PersonIcon />)}
+                </Avatar>
+                <Tooltip title="เปลี่ยนรูปโปรไฟล์">
+                  <IconButton
+                    size="small"
+                    onClick={() => avatarInputRef.current?.click()}
+                    sx={{
+                      position: "absolute", bottom: -4, right: -4,
+                      bgcolor: "background.paper", border: "1px solid", borderColor: "divider",
+                      "&:hover": { bgcolor: "action.hover" },
+                    }}
+                  >
+                    <CameraAltIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Tooltip>
+                <input ref={avatarInputRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
+              </Box>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>{profile.first_name} {profile.last_name}</Typography>
+                <Typography variant="caption" color="text.secondary">{userInfo?.email}</Typography>
+                {profile.avatar && (
+                  <Box>
+                    <Button
+                      size="small"
+                      color="error"
+                      startIcon={<DeleteIcon sx={{ fontSize: 14 }} />}
+                      onClick={() => setProfile((p) => ({ ...p, avatar: null }))}
+                      sx={{ textTransform: "none", fontSize: "0.75rem", p: 0, mt: 0.5, minWidth: 0 }}
+                    >
+                      ลบรูป
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </Stack>
+            <Divider sx={{ mb: 2 }} />
+
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
@@ -218,7 +283,7 @@ export default function SettingsPage() {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ height: "100%" }}>
                   <Chip
-                    label={userInfo?.role === "admin" ? "Admin" : "User"}
+                    label={userInfo?.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
                     color={userInfo?.role === "admin" ? "primary" : "default"}
                     size="small"
                   />

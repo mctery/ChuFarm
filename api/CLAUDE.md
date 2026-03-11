@@ -41,7 +41,7 @@ src/
 │   ├── socketio.js          # Socket.IO with JWT auth
 │   ├── permissions.js       # RBAC definitions (42 permissions, 17 groups)
 │   └── startup.js           # Env validation
-├── controllers/             # 20 controllers (request handlers)
+├── controllers/             # 21 controllers (request handlers)
 ├── middleware/
 │   ├── authorization.js     # JWT verification (sets req.User_name)
 │   ├── checkPermission.js   # RBAC check (admin bypass)
@@ -51,7 +51,7 @@ src/
 │   ├── requestLogger.js     # HTTP request logging
 │   └── errorMiddleware.js   # Global error handler
 ├── models/                  # 19 Mongoose models
-├── routes/                  # 20 route files
+├── routes/                  # 21 route files
 ├── services/
 │   ├── ruleEngine.js        # Automation rule evaluation (AND/OR logic)
 │   ├── scheduleEngine.js    # Cron scheduling (node-cron)
@@ -377,14 +377,23 @@ GET    /api/admin/devices                    # List all devices
 PUT    /api/admin/devices/:id               # Update device
 DELETE /api/admin/devices/:id               # Delete device
 DELETE /api/admin/devices/bulk-delete        # Bulk delete devices
+POST   /api/admin/users                      # Create user (admin)
+PUT    /api/admin/users/:id                 # Update user (admin)
+DELETE /api/admin/users/:id                 # Soft-delete user (admin)
 GET    /api/admin/sensors                    # List all sensors
 PUT    /api/admin/sensors/:id               # Update sensor
 DELETE /api/admin/sensors/:id               # Delete sensor
+DELETE /api/admin/sensors/bulk-delete        # Bulk delete sensors
 GET    /api/admin/device-logs               # List all device logs
 GET    /api/admin/notifications              # List all notifications
 POST   /api/admin/notifications              # Create system notification
+DELETE /api/admin/notifications/:id          # Delete notification
+DELETE /api/admin/notifications/bulk-delete  # Bulk delete notifications
 GET    /api/admin/permissions                # Permission definitions
 GET    /api/admin/menus                      # All menus
+```
+
+> **Bulk operation body key convention:** Use `ids` for devices/sensors/notifications, `user_ids` for users.
 ```
 
 ### Other

@@ -13,6 +13,11 @@ const updateDeviceSchema = Joi.object({
   image: Joi.string().allow(''),
   status: Joi.alternatives().try(Joi.boolean(), Joi.string().valid('A', 'D')),
   online_status: Joi.boolean(),
+  farm_id: Joi.string().allow('', null),
+  zone_id: Joi.string().allow('', null),
+  profile_id: Joi.string().allow('', null),
+  firmware_version: Joi.string().trim().max(50).allow('', null),
+  hardware_version: Joi.string().trim().max(50).allow('', null),
 }).min(1);
 
 const sendCommandSchema = Joi.object({

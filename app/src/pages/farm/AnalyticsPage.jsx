@@ -16,6 +16,7 @@ import {
   Alert,
   Skeleton,
   Paper,
+  CircularProgress,
   useTheme,
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -25,7 +26,6 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { useSnackbar } from "notistack";
 
-import BoxLoading from "../../components/BoxLoading";
 import { SysGetDevices } from "../../services/device_service";
 import {
   SysGetAnalyticsSummary,
@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
     });
   }, [enqueueSnackbar]);
 
-  if (loading) return <BoxLoading />;
+  if (loading) return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>;
 
   return (
     <Box sx={{ p: 3 }}>

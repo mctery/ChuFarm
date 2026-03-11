@@ -10,6 +10,8 @@ import {
   Box,
   IconButton,
   InputAdornment,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { SysLogin, SysCheckToken } from "../../services/auth_service";
@@ -27,6 +29,7 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("remember_me") === "true");
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -70,6 +73,7 @@ const LoginPage = () => {
     setLoading(false);
 
     if (res) {
+      localStorage.setItem("remember_me", rememberMe ? "true" : "false");
       enqueueSnackbar("เข้าสู่ระบบสำเร็จ", { variant: "success" });
       navigate(ROUTES.DASHBOARD);
     } else {
@@ -78,7 +82,7 @@ const LoginPage = () => {
   };
 
   return (
-    <AuthLayout>
+    <AuthLayout layout="split">
       <Stack alignItems="center" spacing={1} sx={{ mb: 2 }}>
         <Box
           sx={{
@@ -154,7 +158,17 @@ const LoginPage = () => {
           }}
         />
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+            }
+            label={<Typography variant="body2">จดจำฉัน</Typography>}
+          />
           <Button
             size="small"
             onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
@@ -162,6 +176,8 @@ const LoginPage = () => {
           >
             ลืมรหัสผ่าน?
           </Button>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, mt: -1.5 }}>
           <Button
             size="small"
             onClick={() => navigate(ROUTES.REGISTER)}
