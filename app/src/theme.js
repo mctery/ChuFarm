@@ -107,11 +107,11 @@ export function getTheme(mode) {
       },
       MuiTableRow: {
         styleOverrides: {
-          root: {
+          root: ({ theme }) => ({
             "&:hover": {
-              backgroundColor: "action.hover",
+              backgroundColor: theme.palette.action.hover,
             },
-          },
+          }),
         },
       },
       MuiTableHead: {

@@ -37,6 +37,9 @@ function initSocketIO(httpServer) {
   io.on('connection', async (socket) => {
     logger.info('Socket.IO client connected', { userId: socket.userId, socketId: socket.id });
 
+    // Join personal user room for push notifications
+    socket.join(`user:${socket.userId}`);
+
     try {
       await joinUserDeviceRooms(socket);
     } catch (err) {
@@ -88,4 +91,9 @@ function emitToDevice(deviceId, event, payload) {
   io.to(`device:${deviceId}`).emit(event, payload);
 }
 
-module.exports = { initSocketIO, getIO, emitToDevice };
+function emitToUser(userId, event, payload) {
+  if (!io) return;
+  io.to(`user:${userId}`).emit(event, payload);
+}
+
+module.exports = { initSocketIO, getIO, emitToDevice, emitToUser };

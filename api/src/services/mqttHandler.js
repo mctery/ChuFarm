@@ -5,7 +5,7 @@ const SensorThreshold = require('../models/sensorThresholdModel');
 const Notification = require('../models/notificationModel');
 const logger = require('../config/logger');
 const { SENSOR_VALUE_RANGE, NOTIFICATION_COOLDOWN_MS } = require('../config');
-const { emitToDevice } = require('../config/socketio');
+const { emitToDevice, emitToUser } = require('../config/socketio');
 const { processRules } = require('./ruleEngine');
 const { notifyViaTelegram } = require('./telegramService');
 
@@ -152,6 +152,7 @@ async function checkThresholds(deviceId, sensorDocs) {
           message: `Device: ${device.name} | Sensor: ${doc.sensor_id} | Value: ${numValue}`,
           severity,
         });
+        emitToUser(device.user_id, 'new_notification', { count: 1 });
         notificationCooldown.set(cooldownKey, now);
         logger.info('Threshold alert created', { device_id: deviceId, sensor_id: doc.sensor_id, value: numValue });
 
@@ -243,6 +244,7 @@ async function handleDeviceWill(topic, _message) {
         message: `อุปกรณ์ ${device.name} (${deviceId}) หยุดเชื่อมต่อ`,
         severity: 'warning',
       });
+      emitToUser(device.user_id, 'new_notification', { count: 1 });
 
       // Send Telegram notification (non-blocking)
       notifyViaTelegram(

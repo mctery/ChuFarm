@@ -1,5 +1,6 @@
 const Notification = require('../models/notificationModel');
 const logger = require('../config/logger');
+const { emitToUser } = require('../config/socketio');
 
 let mqttClient = null;
 
@@ -57,6 +58,7 @@ async function executeAction(action, context, source = 'rule') {
           message: action.message || `${context.name} triggered`,
           severity: 'info',
         });
+        emitToUser(context.user_id, 'new_notification', { count: 1 });
         logger.info(`${source} action: notification sent`, { id: context._id });
         break;
       }

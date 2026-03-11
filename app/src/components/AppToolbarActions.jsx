@@ -39,7 +39,8 @@ import { getUserInfo } from "../services/storage_service";
 import { useThemeMode } from "../App";
 import apiClient from "../services/apiClient";
 import { ROUTES } from "../constants/routes";
-import { SEVERITY_COLORS, APP_CONFIG } from "../services/global_variable";
+import { SEVERITY_COLORS } from "../services/global_variable";
+import { SocketConnect, SocketSubscribe } from "../services/socket_service";
 
 /**
  * Shared top-bar action strip (notifications + profile menu).
@@ -89,8 +90,16 @@ export default function AppToolbarActions({ inAdmin = false }) {
 
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, APP_CONFIG.NOTIF_POLL_INTERVAL);
-    return () => clearInterval(interval);
+
+    let unsubscribe = null;
+    SocketConnect()
+      .then(() => SocketSubscribe("new_notification", () => {
+        setUnreadCount((c) => c + 1);
+      }))
+      .then((unsub) => { unsubscribe = unsub; })
+      .catch(() => { /* socket unavailable — badge still works via initial fetch */ });
+
+    return () => { unsubscribe?.(); };
   }, [fetchUnreadCount]);
 
   const handleMarkAllRead = async () => {
